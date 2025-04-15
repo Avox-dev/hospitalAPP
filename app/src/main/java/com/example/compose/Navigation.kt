@@ -72,9 +72,19 @@ fun AppNavigation(
                 }
             )
         }
-        // 로그인 화면 추가
         composable(Screen.Login.route) {
-            LoginPage()
+            LoginPage(
+                onLoginSuccess = {
+                    // 로그인 성공 시 홈 화면으로 이동
+                    navController.navigate(Screen.Home.route) {
+                        popUpTo(Screen.Login.route) { inclusive = true }
+                    }
+                },
+                onNavigateToRegister = {
+                    // 회원가입 화면으로 이동 (추후 구현)
+                    // navController.navigate("register")
+                }
+            )
         }
     }
 }
