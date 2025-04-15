@@ -26,7 +26,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.ui.draw.clip
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.background
-import com.example.compose.LoginPage
+
 
 @Composable
 fun MyPageScreen(
@@ -37,8 +37,8 @@ fun MyPageScreen(
     val dimens = appDimens()
 
     Column(modifier = Modifier.fillMaxSize()) {
-        // 상단 앱바
-        TopBar()
+        // 상단 앱바에 navigateToScreen 전달
+        TopBar(navigateToScreen = navigateToScreen)
 
         // Quick Menu Icons
         QuickMenuSection()
@@ -58,7 +58,7 @@ fun MyPageScreen(
     }
 }
 @Composable
-fun TopBar() {
+fun TopBar(navigateToScreen: (String) -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -74,7 +74,10 @@ fun TopBar() {
         )
 
         Button(
-            onClick = { /* Login action */ },
+            onClick = {
+                // 로그인 화면으로 이동
+                navigateToScreen("login")
+            },
             colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD0BCFF))
         ) {
             Text(
@@ -84,13 +87,10 @@ fun TopBar() {
             )
         }
 
+        // 나머지 코드는 그대로 유지
         Spacer(modifier = Modifier.width(16.dp))
-
-        // Two empty image buttons
         Box(modifier = Modifier.size(24.dp))
-
         Spacer(modifier = Modifier.width(16.dp))
-
         Box(modifier = Modifier.size(24.dp))
     }
 }

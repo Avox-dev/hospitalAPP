@@ -10,12 +10,14 @@ import com.example.compose.ui.screens.CommunityScreen
 import com.example.compose.ui.screens.HomeScreen
 import com.example.compose.ui.screens.MyDdocDocScreen
 import com.example.compose.ui.screens.MyPageScreen
+import com.example.compose.ui.screens.LoginPage
 
 sealed class Screen(val route: String) {
     object Home : Screen("home")
     object MyDdocDoc : Screen("mydocdoc")
     object Community : Screen("community")
     object MyPage : Screen("mypage")
+    object Login : Screen("login")  // 로그인 화면 추가
 }
 
 @Composable
@@ -69,6 +71,10 @@ fun AppNavigation(
                     navController.navigate(route)
                 }
             )
+        }
+        // 로그인 화면 추가
+        composable(Screen.Login.route) {
+            LoginPage()
         }
     }
 }
