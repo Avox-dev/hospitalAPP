@@ -11,13 +11,15 @@ import com.example.compose.ui.screens.HomeScreen
 import com.example.compose.ui.screens.MyDdocDocScreen
 import com.example.compose.ui.screens.MyPageScreen
 import com.example.compose.ui.screens.LoginPage
+import com.example.compose.ui.screens.RegisterPage
 
 sealed class Screen(val route: String) {
     object Home : Screen("home")
     object MyDdocDoc : Screen("mydocdoc")
     object Community : Screen("community")
     object MyPage : Screen("mypage")
-    object Login : Screen("login")  // 로그인 화면 추가
+    object Login : Screen("login")  // 로그인 화면
+    object Register : Screen("register")  // 회원가입 화면 추가
 }
 
 @Composable
@@ -72,6 +74,7 @@ fun AppNavigation(
                 }
             )
         }
+
         composable(Screen.Login.route) {
             LoginPage(
                 onLoginSuccess = {
@@ -81,8 +84,24 @@ fun AppNavigation(
                     }
                 },
                 onNavigateToRegister = {
-                    // 회원가입 화면으로 이동 (추후 구현)
-                    // navController.navigate("register")
+                    // 회원가입 화면으로 이동
+                    navController.navigate(Screen.Register.route)
+                }
+            )
+        }
+
+        // 회원가입 화면 추가
+        composable(Screen.Register.route) {
+            RegisterPage(
+                onNavigateBack = {
+                    // 뒤로가기 (로그인 화면으로 돌아감)
+                    navController.popBackStack()
+                },
+                onRegisterSuccess = {
+                    // 회원가입 성공 시 로그인 화면으로 이동
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.Register.route) { inclusive = true }
+                    }
                 }
             )
         }
