@@ -381,7 +381,7 @@ fun BottomNavigation(
         )
 
         BottomNavigationItem(
-            text = "나의 똑닥",
+            text = "닥터 퓨처(AI)",
             iconRes = android.R.drawable.ic_menu_myplaces,
             isSelected = currentRoute == Screen.MyDdocDoc.route,
             onClick = { onNavigate(Screen.MyDdocDoc.route) }

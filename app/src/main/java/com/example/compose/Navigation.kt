@@ -14,7 +14,8 @@ import com.example.compose.ui.screens.LoginPage
 import com.example.compose.ui.screens.RegisterPage
 import com.example.compose.ui.screens.WritePostScreen
 import com.example.compose.ui.screens.ProfileManagementScreen
-import com.example.compose.ui.screens.ReservationHistoryScreen // 추가
+import com.example.compose.ui.screens.ReservationHistoryScreen
+import com.example.compose.ui.screens.ChatBotScreen // 추가
 
 sealed class Screen(val route: String) {
     object Home : Screen("home")
@@ -25,7 +26,8 @@ sealed class Screen(val route: String) {
     object Register : Screen("register")
     object WritePost : Screen("write_post")
     object ProfileManagement : Screen("profile_management")
-    object ReservationHistory : Screen("reservation_history") // 추가: 예약 내역 화면
+    object ReservationHistory : Screen("reservation_history")
+    object ChatBot : Screen("chatbot") // 추가: 챗봇 화면
 }
 
 @Composable
@@ -126,9 +128,18 @@ fun AppNavigation(
             )
         }
 
-        // 추가: 예약 내역 화면
+        // 예약 내역 화면
         composable(Screen.ReservationHistory.route) {
             ReservationHistoryScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                }
+            )
+        }
+
+        // 챗봇 화면 추가
+        composable(Screen.ChatBot.route) {
+            ChatBotScreen(
                 onNavigateBack = {
                     navController.popBackStack()
                 }
