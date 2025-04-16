@@ -52,7 +52,7 @@ fun TopAppBar() {
             Spacer(modifier = Modifier.width(4.dp))
 
             Text(
-                text = "주안동",
+                text = "주안동(미구현)",
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.Black
@@ -171,7 +171,7 @@ fun PneumoniaBanner() {
                 Spacer(modifier = Modifier.height(dimens.paddingMedium.dp))
 
                 Text(
-                    text = "의사쌤이 알려드려요",
+                    text = "의사쌤이 알려드려요(미구현)",
                     fontSize = 14.sp,
                     color = Color(0xEEFFFFFF)
                 )
@@ -296,7 +296,7 @@ fun ChildGrowthBanner() {
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
-                    text = "우리 아이 키/몸무게",
+                    text = "우리 아이 키/몸무게(미구현)",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.Black
@@ -521,55 +521,95 @@ fun QuickMenuSection() {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 16.dp),
+            .padding(horizontal = 16.dp, vertical = 24.dp),
         horizontalArrangement = Arrangement.SpaceBetween
     ) {
-        // Family Management
+        // 가족관리
         QuickMenuItem(
-            text = "가족관리"
+            text = "가족관리",
+            iconRes = android.R.drawable.ic_menu_my_calendar,
+            onClick = { /* 가족관리 화면으로 이동 */ }
         )
 
-        // Membership Management
+        // 멤버십 관리
         QuickMenuItem(
-            text = "멤버십 관리"
+            text = "멤버십 관리",
+            iconRes = android.R.drawable.ic_menu_today,
+            onClick = { /* 멤버십 관리 화면으로 이동 */ }
         )
 
-        // Events/Promos
+        // 이벤트·투표
         QuickMenuItem(
-            text = "이벤트·투표"
+            text = "이벤트·투표",
+            iconRes = android.R.drawable.ic_menu_gallery,
+            onClick = { /* 이벤트·투표 화면으로 이동 */ }
         )
 
-        // Customer Center
+        // 고객센터
         QuickMenuItem(
-            text = "고객센터"
+            text = "고객센터",
+            iconRes = android.R.drawable.ic_menu_help,
+            onClick = { /* 고객센터 화면으로 이동 */ }
         )
     }
 }
 
 @Composable
-fun QuickMenuItem(text: String) {
+fun QuickMenuItem(
+    text: String,
+    iconRes: Int,
+    onClick: () -> Unit = {}
+) {
     Column(
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .padding(horizontal = 4.dp)
+            .clickable(onClick = onClick)
     ) {
+        // 아이콘 박스
         Box(
             modifier = Modifier
-                .size(60.dp),
+                .size(56.dp)
+                .clip(CircleShape)
+                .background(Color(0xFFF5F5F5))
+                .padding(16.dp),
             contentAlignment = Alignment.Center
         ) {
-            // Placeholder for icon
-            Box(
-                modifier = Modifier
-                    .size(40.dp)
+            Icon(
+                painter = painterResource(id = iconRes),
+                contentDescription = text,
+                tint = Color(0xFFD0BCFF),
+                modifier = Modifier.size(24.dp)
             )
         }
 
         Spacer(modifier = Modifier.height(8.dp))
 
+        // 텍스트
         Text(
             text = text,
-            fontSize = 14.sp,
-            color = Color.Black
+            fontSize = 12.sp,
+            color = Color.Black,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.width(70.dp)
         )
+
+        // 아직 구현되지 않은 기능임을 나타내는 배지
+        Box(
+            modifier = Modifier
+                .padding(top = 4.dp)
+                .background(
+                    color = Color(0xFFE0E0E0),
+                    shape = RoundedCornerShape(4.dp)
+                )
+                .padding(horizontal = 6.dp, vertical = 2.dp)
+        ) {
+            Text(
+                text = "미구현",
+                fontSize = 8.sp,
+                color = Color.Gray
+            )
+        }
     }
 }
 
@@ -580,7 +620,7 @@ fun MenuListSection(
     currentUser: User? = null,
     onLoginClick: () -> Unit = {},
     onLogoutClick: () -> Unit = {},
-    navigateToScreen: (String) -> Unit = {} // 추가: navigateToScreen 파라미터
+    navigateToScreen: (String) -> Unit = {}
 ) {
     Column(modifier = modifier.padding(16.dp)) {
         // 로그인 상태에 따라 다른 UI 표시
@@ -639,26 +679,28 @@ fun MenuListSection(
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        // 기타 마이페이지 메뉴 항목들...
-        // 내 정보 관리 클릭 시 내 정보 관리 화면으로 이동하도록 수정
+        // 마이페이지 메뉴 항목들...
+        // 내 정보 관리 클릭 시 내 정보 관리 화면으로 이동
         MenuItemCard(
             title = "내 정보 관리",
             subtitle = "개인정보 수정, 비밀번호 변경",
             onClick = { navigateToScreen(Screen.ProfileManagement.route) }
         )
 
+        // 예약 내역 클릭 시 예약 내역 화면으로 이동하도록 수정
         MenuItemCard(
             title = "예약 내역",
-            subtitle = "나의 병원 예약 조회 및 관리"
+            subtitle = "나의 병원 예약 조회 및 관리",
+            onClick = { navigateToScreen(Screen.ReservationHistory.route) }
         )
 
         MenuItemCard(
-            title = "알림 설정",
+            title = "알림 설정(미구현)",
             subtitle = "앱 알림 설정 및 관리"
         )
 
         MenuItemCard(
-            title = "고객 센터",
+            title = "고객 센터(미구현)",
             subtitle = "문의하기, 공지사항, FAQ"
         )
     }

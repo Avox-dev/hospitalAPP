@@ -32,7 +32,7 @@ fun MyDdocDocScreen(
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "나의 똑닥",
+                text = "(미구현)",
                 fontSize = 24.sp,
                 fontWeight = FontWeight.Bold
             )

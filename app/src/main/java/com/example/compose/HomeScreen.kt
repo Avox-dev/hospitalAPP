@@ -59,7 +59,7 @@ fun HomeScreen(
                         .padding(end = 6.dp)
                 ) {
                     CategoryButton(
-                        text = "동네 인기 병원",
+                        text = "동네 인기 병원(미구현)",
                         backgroundColor = PopularHospital,
                         onClick = {}
                     )
@@ -71,7 +71,7 @@ fun HomeScreen(
                         .padding(start = 6.dp)
                 ) {
                     CategoryButton(
-                        text = "지금 문연 병원",
+                        text = "지금 문연 병원(미구현)",
                         backgroundColor = OpenHospital,
                         onClick = {}
                     )
@@ -87,7 +87,7 @@ fun HomeScreen(
 
             // 진료과로 병원 찾기
             Text(
-                text = "진료과로 병원 찾기",
+                text = "진료과로 병원 찾기(미구현)",
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.Black
