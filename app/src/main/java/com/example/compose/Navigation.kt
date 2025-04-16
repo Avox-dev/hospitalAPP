@@ -1,4 +1,4 @@
-// Navigation.kt - App navigation handling
+// Navigation.kt - 수정
 package com.example.compose.navigation
 
 import androidx.compose.runtime.Composable
@@ -12,14 +12,16 @@ import com.example.compose.ui.screens.MyDdocDocScreen
 import com.example.compose.ui.screens.MyPageScreen
 import com.example.compose.ui.screens.LoginPage
 import com.example.compose.ui.screens.RegisterPage
+import com.example.compose.ui.screens.WritePostScreen // 추가
 
 sealed class Screen(val route: String) {
     object Home : Screen("home")
     object MyDdocDoc : Screen("mydocdoc")
     object Community : Screen("community")
     object MyPage : Screen("mypage")
-    object Login : Screen("login")  // 로그인 화면
-    object Register : Screen("register")  // 회원가입 화면 추가
+    object Login : Screen("login")
+    object Register : Screen("register")
+    object WritePost : Screen("write_post") // 추가: 글쓰기 화면
 }
 
 @Composable
@@ -32,19 +34,15 @@ fun AppNavigation(
         startDestination = Screen.Home.route,
         modifier = modifier
     ) {
+        // 기존 화면 유지
         composable(Screen.Home.route) {
             HomeScreen(
                 navigateToScreen = { route ->
                     navController.navigate(route) {
-                        // Pop up to the start destination of the graph to
-                        // avoid building up a large stack of destinations
                         popUpTo(Screen.Home.route) {
                             saveState = true
                         }
-                        // Avoid multiple copies of the same destination when
-                        // reselecting the same item
                         launchSingleTop = true
-                        // Restore state when reselecting a previously selected item
                         restoreState = true
                     }
                 }
@@ -78,29 +76,39 @@ fun AppNavigation(
         composable(Screen.Login.route) {
             LoginPage(
                 onLoginSuccess = {
-                    // 로그인 성공 시 홈 화면으로 이동
                     navController.navigate(Screen.Home.route) {
                         popUpTo(Screen.Login.route) { inclusive = true }
                     }
                 },
                 onNavigateToRegister = {
-                    // 회원가입 화면으로 이동
                     navController.navigate(Screen.Register.route)
                 }
             )
         }
 
-        // 회원가입 화면 추가
         composable(Screen.Register.route) {
             RegisterPage(
                 onNavigateBack = {
-                    // 뒤로가기 (로그인 화면으로 돌아감)
                     navController.popBackStack()
                 },
                 onRegisterSuccess = {
-                    // 회원가입 성공 시 로그인 화면으로 이동
                     navController.navigate(Screen.Login.route) {
                         popUpTo(Screen.Register.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+
+        // 추가: 글쓰기 화면
+        composable(Screen.WritePost.route) {
+            WritePostScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onPostSuccess = {
+                    // 글 작성 성공 시 커뮤니티 화면으로 돌아감
+                    navController.navigate(Screen.Community.route) {
+                        popUpTo(Screen.WritePost.route) { inclusive = true }
                     }
                 }
             )
