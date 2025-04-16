@@ -12,7 +12,8 @@ import com.example.compose.ui.screens.MyDdocDocScreen
 import com.example.compose.ui.screens.MyPageScreen
 import com.example.compose.ui.screens.LoginPage
 import com.example.compose.ui.screens.RegisterPage
-import com.example.compose.ui.screens.WritePostScreen // 추가
+import com.example.compose.ui.screens.WritePostScreen
+import com.example.compose.ui.screens.ProfileManagementScreen // 추가
 
 sealed class Screen(val route: String) {
     object Home : Screen("home")
@@ -21,7 +22,8 @@ sealed class Screen(val route: String) {
     object MyPage : Screen("mypage")
     object Login : Screen("login")
     object Register : Screen("register")
-    object WritePost : Screen("write_post") // 추가: 글쓰기 화면
+    object WritePost : Screen("write_post")
+    object ProfileManagement : Screen("profile_management") // 추가: 내 정보 관리 화면
 }
 
 @Composable
@@ -99,7 +101,6 @@ fun AppNavigation(
             )
         }
 
-        // 추가: 글쓰기 화면
         composable(Screen.WritePost.route) {
             WritePostScreen(
                 onNavigateBack = {
@@ -110,6 +111,15 @@ fun AppNavigation(
                     navController.navigate(Screen.Community.route) {
                         popUpTo(Screen.WritePost.route) { inclusive = true }
                     }
+                }
+            )
+        }
+
+        // 추가: 내 정보 관리 화면
+        composable(Screen.ProfileManagement.route) {
+            ProfileManagementScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
                 }
             )
         }

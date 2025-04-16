@@ -45,7 +45,8 @@ fun MyPageScreen(
             onLogoutClick = {
                 userRepository.logoutUser()
                 // 필요한 경우 추가 로그아웃 처리
-            }
+            },
+            navigateToScreen = navigateToScreen // 추가: navigateToScreen 전달
         )
 
         // 하단 네비게이션

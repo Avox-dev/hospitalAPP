@@ -573,13 +573,14 @@ fun QuickMenuItem(text: String) {
     }
 }
 
-// MenuListSection.kt 수정 또는 새로 생성
+// MenuListSection 컴포넌트 수정
 @Composable
 fun MenuListSection(
     modifier: Modifier = Modifier,
     currentUser: User? = null,
     onLoginClick: () -> Unit = {},
-    onLogoutClick: () -> Unit = {}
+    onLogoutClick: () -> Unit = {},
+    navigateToScreen: (String) -> Unit = {} // 추가: navigateToScreen 파라미터
 ) {
     Column(modifier = modifier.padding(16.dp)) {
         // 로그인 상태에 따라 다른 UI 표시
@@ -639,10 +640,11 @@ fun MenuListSection(
         Spacer(modifier = Modifier.height(16.dp))
 
         // 기타 마이페이지 메뉴 항목들...
-        // 예: 내 정보 관리, 예약 내역, 설정 등
+        // 내 정보 관리 클릭 시 내 정보 관리 화면으로 이동하도록 수정
         MenuItemCard(
             title = "내 정보 관리",
-            subtitle = "개인정보 수정, 비밀번호 변경"
+            subtitle = "개인정보 수정, 비밀번호 변경",
+            onClick = { navigateToScreen(Screen.ProfileManagement.route) }
         )
 
         MenuItemCard(
