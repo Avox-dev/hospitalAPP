@@ -22,10 +22,12 @@ import com.example.compose.ui.theme.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.ui.tooling.preview.Preview
+import com.example.compose.data.User
 
 @Composable
 fun TopAppBar() {
@@ -437,9 +439,12 @@ fun BottomNavigationItem(
     }
 }
 
-// 마이페이지 컴포넌트 추가
+// 마이페이지 컴포넌트 수정
 @Composable
-fun MyPageTopBar(navigateToScreen: (String) -> Unit) {
+fun MyPageTopBar(
+    navigateToScreen: (String) -> Unit,
+    currentUser: User? = null // 로그인된 사용자 정보
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -454,18 +459,53 @@ fun MyPageTopBar(navigateToScreen: (String) -> Unit) {
             modifier = Modifier.weight(1f)
         )
 
-        Button(
-            onClick = {
-                // 로그인 화면으로 이동
-                navigateToScreen("login")
-            },
-            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD0BCFF))
-        ) {
-            Text(
-                text = "로그인",
-                fontSize = 14.sp,
-                color = Color.Black
-            )
+        // 로그인 상태에 따라 다른 UI 표시
+        if (currentUser == null) {
+            // 로그인 되지 않은 경우 로그인 버튼 표시
+            Button(
+                onClick = {
+                    // 로그인 화면으로 이동
+                    navigateToScreen("login")
+                },
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD0BCFF))
+            ) {
+                Text(
+                    text = "로그인",
+                    fontSize = 14.sp,
+                    color = Color.Black
+                )
+            }
+        } else {
+            // 로그인된 경우 사용자 ID 표시
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                // 사용자 프로필 아이콘 (원형)
+                Box(
+                    modifier = Modifier
+                        .size(40.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFFD0BCFF)),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = currentUser.userId.first().toString().uppercase(),
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.Black
+                    )
+                }
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                // 사용자 ID
+                Text(
+                    text = currentUser.userId,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = Color.Black
+                )
+            }
         }
 
         // 나머지 코드는 그대로 유지
@@ -533,114 +573,139 @@ fun QuickMenuItem(text: String) {
     }
 }
 
+// MenuListSection.kt 수정 또는 새로 생성
 @Composable
-fun MenuListSection(modifier: Modifier = Modifier) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(top = 24.dp)
-    ) {
-        // Child Development Section
-        CategoryHeader(text = "자녀성장")
+fun MenuListSection(
+    modifier: Modifier = Modifier,
+    currentUser: User? = null,
+    onLoginClick: () -> Unit = {},
+    onLogoutClick: () -> Unit = {}
+) {
+    Column(modifier = modifier.padding(16.dp)) {
+        // 로그인 상태에 따라 다른 UI 표시
+        if (currentUser == null) {
+            // 로그인 버튼 표시
+            Button(
+                onClick = onLoginClick,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFFD0BCFF)
+                ),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Text("로그인", fontSize = 16.sp, color = Color.Black)
+            }
+        } else {
+            // 사용자 정보 표시
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                colors = CardDefaults.cardColors(
+                    containerColor = Color.White
+                ),
+                elevation = CardDefaults.cardElevation(4.dp)
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
+                ) {
+                    Text(
+                        text = "${currentUser.userId}님, 환영합니다",
+                        fontSize = 18.sp,
+                        fontWeight = FontWeight.Bold
+                    )
 
-        MenuItem(text = "우리아이 키·몸무게")
+                    Spacer(modifier = Modifier.height(8.dp))
 
-        Divider(thickness = 1.dp, color = Color(0xFFEEEEEE))
+                    // 로그아웃 버튼
+                    TextButton(
+                        onClick = onLogoutClick,
+                        modifier = Modifier.align(Alignment.End)
+                    ) {
+                        Text(
+                            text = "로그아웃",
+                            fontSize = 14.sp,
+                            color = Color.Gray
+                        )
+                    }
+                }
+            }
+        }
 
-        MenuItemWithBadge(text = "영유아검진 관리", showBadge = true)
+        Spacer(modifier = Modifier.height(16.dp))
 
-        Divider(thickness = 1.dp, color = Color(0xFFEEEEEE))
-
-        MenuItemWithBadge(text = "예방접종 관리", showBadge = true)
-
-        // Section Divider
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(8.dp)
-                .background(Color(0xFFF7F7F7))
+        // 기타 마이페이지 메뉴 항목들...
+        // 예: 내 정보 관리, 예약 내역, 설정 등
+        MenuItemCard(
+            title = "내 정보 관리",
+            subtitle = "개인정보 수정, 비밀번호 변경"
         )
 
-        // Diagnosis Section
-        CategoryHeader(text = "진료")
-
-        MenuItem(text = "진료내역")
-
-        Divider(thickness = 1.dp, color = Color(0xFFEEEEEE))
-
-        MenuItem(text = "편한 병원")
-
-        Divider(thickness = 1.dp, color = Color(0xFFEEEEEE))
-
-        MenuItem(text = "접수·예약 캘린더")
-
-        // Section Divider
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(8.dp)
-                .background(Color(0xFFF7F7F7))
+        MenuItemCard(
+            title = "예약 내역",
+            subtitle = "나의 병원 예약 조회 및 관리"
         )
 
-        // Service and Terms Section
-        CategoryHeader(text = "서류 및 결제")
+        MenuItemCard(
+            title = "알림 설정",
+            subtitle = "앱 알림 설정 및 관리"
+        )
+
+        MenuItemCard(
+            title = "고객 센터",
+            subtitle = "문의하기, 공지사항, FAQ"
+        )
     }
 }
 
+// 메뉴 아이템 카드 컴포넌트
 @Composable
-fun CategoryHeader(text: String) {
-    Text(
-        text = text,
-        fontSize = 14.sp,
-        color = Color(0xFF666666),
+fun MenuItemCard(
+    title: String,
+    subtitle: String,
+    onClick: () -> Unit = {}
+) {
+    Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 12.dp)
-    )
-}
-
-@Composable
-fun MenuItem(text: String) {
-    Text(
-        text = text,
-        fontSize = 16.sp,
-        color = Color.Black,
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { /* Navigate to item */ }
-            .padding(horizontal = 16.dp, vertical = 20.dp)
-    )
-}
-
-@Composable
-fun MenuItemWithBadge(text: String, showBadge: Boolean) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { /* Navigate to item */ }
-            .padding(horizontal = 16.dp, vertical = 20.dp),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.SpaceBetween
+            .padding(vertical = 8.dp)
+            .clickable(onClick = onClick),
+        colors = CardDefaults.cardColors(
+            containerColor = Color.White
+        ),
+        elevation = CardDefaults.cardElevation(2.dp)
     ) {
-        Text(
-            text = text,
-            fontSize = 16.sp,
-            color = Color.Black
-        )
-
-        if (showBadge) {
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(4.dp))
-                    .background(Color.Red)
-                    .padding(horizontal = 8.dp, vertical = 2.dp)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Column(
+                modifier = Modifier.weight(1f)
             ) {
                 Text(
-                    text = "NEW",
-                    fontSize = 12.sp,
-                    color = Color.White
+                    text = title,
+                    fontSize = 16.sp,
+                    fontWeight = FontWeight.Medium
+                )
+
+                Text(
+                    text = subtitle,
+                    fontSize = 14.sp,
+                    color = Color.Gray
                 )
             }
+
+            Icon(
+                imageVector = Icons.Default.KeyboardArrowRight,
+                contentDescription = null,
+                tint = Color.Gray
+            )
         }
     }
 }

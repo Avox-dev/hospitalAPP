@@ -8,8 +8,11 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import com.example.compose.data.User
+import com.example.compose.data.UserRepository
 
 class LoginViewModel : ViewModel() {
+    private val userRepository = UserRepository.getInstance()
 
     // 로그인 상태를 관리하는 StateFlow
     private val _loginState = MutableStateFlow<LoginState>(LoginState.Initial)
@@ -30,6 +33,8 @@ class LoginViewModel : ViewModel() {
                 val isSuccess = validateCredentials(userId, password)
 
                 if (isSuccess) {
+                    // 사용자 정보 저장 (api서버로 저장해야하나?)
+                    userRepository.setCurrentUser(User(userId = userId))
                     // 로그인 성공
                     _loginState.value = LoginState.Success("로그인에 성공했습니다!")
                 } else {
