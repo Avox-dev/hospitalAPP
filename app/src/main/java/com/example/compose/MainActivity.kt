@@ -2,6 +2,7 @@
 package com.example.compose
 
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
@@ -13,10 +14,16 @@ import androidx.compose.ui.graphics.Color
 import androidx.navigation.compose.rememberNavController
 import com.example.compose.navigation.AppNavigation
 import com.example.compose.ui.theme.HospitalAppTheme
+import com.kakao.sdk.common.util.Utility
+import com.kakao.sdk.common.KakaoSdk
+import com.kakao.vectormap.KakaoMapSdk
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        var keyHash = Utility.getKeyHash(this)
+        Log.d("KeyHash", "KeyHash: $keyHash")
+        KakaoMapSdk.init(this,"bf105d2a0b3861e39aff0e8f49f7f0ce")
         setContent {
             HospitalAppTheme {
                 Box(
@@ -29,5 +36,6 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+
     }
 }

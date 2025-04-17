@@ -16,8 +16,11 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-    }
+        ndk {
+            abiFilters += listOf("armeabi-v7a", "arm64-v8a")
+        }
 
+    }
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -59,4 +62,7 @@ dependencies {
     // OkHttp for network requests
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("androidx.navigation:navigation-compose:2.7.7")
+    // Kakao Map SDK
+    implementation("com.kakao.maps.open:android:2.12.14")
+    implementation("com.kakao.sdk:v2-all:2.11.0")
 }

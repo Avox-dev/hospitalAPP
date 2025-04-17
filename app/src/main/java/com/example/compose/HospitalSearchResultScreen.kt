@@ -28,6 +28,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import com.example.compose.ui.theme.Purple80
+import com.example.compose.KakaoMap.KakaoMap
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -100,82 +101,8 @@ fun HospitalSearchResultScreen(
                     .fillMaxWidth()
                     .weight(1f)
             ) {
-                // 카카오맵 웹뷰 통합
-                AndroidView(
-                    factory = { context ->
-                        WebView(context).apply {
-                            layoutParams = ViewGroup.LayoutParams(
-                                ViewGroup.LayoutParams.MATCH_PARENT,
-                                ViewGroup.LayoutParams.MATCH_PARENT
-                            )
-                            webViewClient = WebViewClient()
-                            settings.javaScriptEnabled = true
-                            settings.loadWithOverviewMode = true
-                            settings.useWideViewPort = true
-                            settings.cacheMode = WebSettings.LOAD_NO_CACHE
-
-                            // JavaScript 인터페이스 추가
-                            addJavascriptInterface(object : Any() {
-                                @JavascriptInterface
-                                fun processHTML(html: String) {
-                                    // 필요한 경우 여기서 JavaScript와 통신할 수 있습니다
-                                }
-                            }, "Android")
-
-                            // 임시 HTML 로드 - 실제 구현에서는 카카오 맵 API 키를 사용해야 합니다
-                            val mapHtml = """
-                                <!DOCTYPE html>
-                                <html>
-                                <head>
-                                    <meta charset="utf-8"/>
-                                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                                    <title>지도 표시</title>
-                                    <style>
-                                        body { margin: 0; padding: 0; }
-                                        #map { width: 100%; height: 100%; background-color: #f0f0f0; display: flex; align-items: center; justify-content: center; flex-direction: column; }
-                                    </style>
-                                </head>
-                                <body>
-                                    <div id="map">
-                                        <h2 style="text-align: center; color: #666;">카카오맵이 표시될 영역</h2>
-                                        <p style="text-align: center; color: #888;">${selectedHospital.name}</p>
-                                        <p style="text-align: center; color: #888;">위도: ${selectedHospital.latitude}, 경도: ${selectedHospital.longitude}</p>
-                                    </div>
-                                </body>
-                                </html>
-                            """.trimIndent()
-
-                            loadDataWithBaseURL(null, mapHtml, "text/html", "UTF-8", null)
-                        }
-                    },
-                    update = { webView ->
-                        // 병원 선택이 변경되면 웹뷰 업데이트
-                        val mapHtml = """
-                            <!DOCTYPE html>
-                            <html>
-                            <head>
-                                <meta charset="utf-8"/>
-                                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-                                <title>지도 표시</title>
-                                <style>
-                                    body { margin: 0; padding: 0; }
-                                    #map { width: 100%; height: 100%; background-color: #f0f0f0; display: flex; align-items: center; justify-content: center; flex-direction: column; }
-                                </style>
-                            </head>
-                            <body>
-                                <div id="map">
-                                    <h2 style="text-align: center; color: #666;">카카오맵이 표시될 영역</h2>
-                                    <p style="text-align: center; color: #888;">${selectedHospital.name}</p>
-                                    <p style="text-align: center; color: #888;">위도: ${selectedHospital.latitude}, 경도: ${selectedHospital.longitude}</p>
-                                </div>
-                            </body>
-                            </html>
-                        """.trimIndent()
-
-                        webView.loadDataWithBaseURL(null, mapHtml, "text/html", "UTF-8", null)
-                    },
-                    modifier = Modifier.fillMaxSize()
-                )
+                //카카오맵 함수
+                KakaoMap()
 
                 // 검색 결과 카운트 표시
                 Card(
