@@ -1,4 +1,4 @@
-// HomeScreen.kt - Main home screen
+// HomeScreen.kt - Modified with search functionality
 package com.example.compose.ui.screens
 
 import androidx.compose.foundation.background
@@ -14,21 +14,28 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -38,6 +45,14 @@ import com.example.compose.navigation.Screen
 import com.example.compose.ui.components.*
 import com.example.compose.ui.theme.*
 import com.example.compose.viewmodel.HomeViewModel
+
+// Required imports for the SearchBar function
+import androidx.compose.material3.TextField
+import androidx.compose.material3.Text
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.ui.text.input.ImeAction
 
 @Composable
 fun HomeScreen(
@@ -51,8 +66,13 @@ fun HomeScreen(
         // 상단 앱바
         TopAppBar()
 
-        // 검색창
-        SearchBar()
+        // 검색창 - 수정된 부분
+        SearchBar(onSearch = { query ->
+            // 검색어가 "병원"을 포함하면 병원 검색 결과 화면으로 이동
+            if (query.contains("병원")) {
+                navigateToScreen("hospital_search_result/$query")
+            }
+        })
 
         // 스크롤 영역
         Column(
@@ -76,9 +96,12 @@ fun HomeScreen(
                         .padding(end = 6.dp)
                 ) {
                     CategoryButton(
-                        text = "동네 인기 병원(미구현)",
+                        text = "동네 인기 병원",
                         backgroundColor = PopularHospital,
-                        onClick = {}
+                        onClick = {
+                            // 병원 검색 결과 화면으로 이동
+                            navigateToScreen("hospital_search_result/인기병원")
+                        }
                     )
                 }
 
@@ -88,9 +111,12 @@ fun HomeScreen(
                         .padding(start = 6.dp)
                 ) {
                     CategoryButton(
-                        text = "지금 문연 병원(미구현)",
+                        text = "지금 문연 병원",
                         backgroundColor = OpenHospital,
-                        onClick = {}
+                        onClick = {
+                            // 병원 검색 결과 화면으로 이동
+                            navigateToScreen("hospital_search_result/문연병원")
+                        }
                     )
                 }
             }
@@ -104,7 +130,7 @@ fun HomeScreen(
 
             // 진료과로 병원 찾기
             Text(
-                text = "진료과로 병원 찾기(미구현)",
+                text = "진료과로 병원 찾기",
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.Black
@@ -120,28 +146,41 @@ fun HomeScreen(
                 item {
                     DepartmentItem(
                         name = "소아청소년과",
-                        backgroundColor = PediatricsDept
+                        backgroundColor = PediatricsDept,
+                        onClick = {
+                            // 병원 검색 결과 화면으로 이동
+                            navigateToScreen("hospital_search_result/소아청소년과")
+                        }
                     )
                 }
 
                 item {
                     DepartmentItem(
                         name = "이비인후과",
-                        backgroundColor = EntDept
+                        backgroundColor = EntDept,
+                        onClick = {
+                            navigateToScreen("hospital_search_result/이비인후과")
+                        }
                     )
                 }
 
                 item {
                     DepartmentItem(
                         name = "가정의학과",
-                        backgroundColor = FamilyMedicineDept
+                        backgroundColor = FamilyMedicineDept,
+                        onClick = {
+                            navigateToScreen("hospital_search_result/가정의학과")
+                        }
                     )
                 }
 
                 item {
                     DepartmentItem(
                         name = "산부인과",
-                        backgroundColor = ObGynDept
+                        backgroundColor = ObGynDept,
+                        onClick = {
+                            navigateToScreen("hospital_search_result/산부인과")
+                        }
                     )
                 }
             }
@@ -198,7 +237,7 @@ fun TopAppBar() {
             Spacer(modifier = Modifier.width(4.dp))
 
             Text(
-                text = "주안동(미구현)",
+                text = "주안동",
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.Black
@@ -244,8 +283,9 @@ fun TopAppBar() {
 }
 
 @Composable
-fun SearchBar() {
+fun SearchBar(onSearch: (String) -> Unit = {}) {
     val dimens = appDimens()
+    var searchText by remember { mutableStateOf("") }
 
     Card(
         modifier = Modifier
@@ -263,7 +303,7 @@ fun SearchBar() {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
-                painter = painterResource(id = android.R.drawable.ic_menu_search),
+                imageVector = Icons.Default.Search,
                 contentDescription = "Search",
                 tint = TextSecondary,
                 modifier = Modifier.size(dimens.iconSize.dp)
@@ -271,15 +311,42 @@ fun SearchBar() {
 
             Spacer(modifier = Modifier.width(dimens.paddingMedium.dp))
 
-            Text(
-                text = "질병, 진료과, 병원을 검색해보세요.",
-                fontSize = 14.sp,
-                color = TextSecondary
+            // 표준 TextField 사용
+            TextField(
+                value = searchText,
+                onValueChange = { searchText = it },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                placeholder = {
+                    Text(
+                        text = "질병, 진료과, 병원을 검색해보세요.",
+                        fontSize = 14.sp,
+                        color = TextSecondary
+                    )
+                },
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = Color.Transparent,
+                    unfocusedContainerColor = Color.Transparent,
+                    disabledContainerColor = Color.Transparent,
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                ),
+                singleLine = true,
+                maxLines = 1,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                keyboardActions = KeyboardActions(
+                    onSearch = {
+                        if (searchText.isNotEmpty()) {
+                            onSearch(searchText)
+                            searchText = ""  // 검색 후 입력 필드 초기화
+                        }
+                    }
+                )
             )
         }
     }
 }
-
 
 @Composable
 fun PneumoniaBanner() {
@@ -318,7 +385,7 @@ fun PneumoniaBanner() {
                 Spacer(modifier = Modifier.height(dimens.paddingMedium.dp))
 
                 Text(
-                    text = "의사쌤이 알려드려요(미구현)",
+                    text = "의사쌤이 알려드려요",
                     fontSize = 14.sp,
                     color = Color(0xEEFFFFFF)
                 )
@@ -353,12 +420,6 @@ fun PneumoniaBanner() {
             }
         }
     }
-}
-
-@Preview
-@Composable
-fun PneumoniaBannerPreview() {
-    PneumoniaBanner()
 }
 
 @Composable
@@ -402,14 +463,6 @@ fun CategoryButton(
     }
 }
 
-@Preview
-@Composable
-fun CategoryButtonPreview() {
-    CategoryButton(text = "내과", backgroundColor = Color.Blue) {
-        // do nothing
-    }
-}
-
 @Composable
 fun ChildGrowthBanner() {
     val dimens = appDimens()
@@ -430,20 +483,23 @@ fun ChildGrowthBanner() {
             Column(
                 modifier = Modifier.align(Alignment.CenterStart)
             ) {
-                Text(
-                    text = "NEW",
-                    fontSize = 10.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = PurpleGrey40,
+                // NEW 배지 - Text를 Box 안에 넣어 배경을 적용
+                Box(
                     modifier = Modifier
                         .background(BadgeBackground)
                         .padding(horizontal = 6.dp, vertical = 2.dp)
-                )
+                ) {
+                    Text(
+                        text = "NEW",
+                        fontSize = 10.sp,
+                        color = Color.Gray
+                    )
+                }
 
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
-                    text = "우리 아이 키/몸무게(미구현)",
+                    text = "우리 아이 키/몸무게",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.Black
@@ -468,18 +524,18 @@ fun ChildGrowthBanner() {
     }
 }
 
-@Preview
 @Composable
-fun ChildGrowthBannerPreview() {
-    ChildGrowthBanner()
-}
-
-@Composable
-fun DepartmentItem(name: String, backgroundColor: Color) {
+fun DepartmentItem(
+    name: String,
+    backgroundColor: Color,
+    onClick: () -> Unit = {}
+) {
     val dimens = appDimens()
 
     Column(
-        modifier = Modifier.width(dimens.departmentItemWidth.dp),
+        modifier = Modifier
+            .width(dimens.departmentItemWidth.dp)
+            .clickable(onClick = onClick),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Card(
@@ -498,10 +554,4 @@ fun DepartmentItem(name: String, backgroundColor: Color) {
             textAlign = TextAlign.Center
         )
     }
-}
-
-@Preview
-@Composable
-fun DepartmentItemPreview() {
-    DepartmentItem(name = "내과", backgroundColor = Color.LightGray)
 }

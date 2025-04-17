@@ -1,11 +1,13 @@
-// Navigation.kt - 수정
+// Navigation.kt - Updated with hospital search
 package com.example.compose.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import com.example.compose.ui.screens.CommunityScreen
 import com.example.compose.ui.screens.HomeScreen
 import com.example.compose.ui.screens.MyDdocDocScreen
@@ -15,7 +17,8 @@ import com.example.compose.ui.screens.RegisterPage
 import com.example.compose.ui.screens.WritePostScreen
 import com.example.compose.ui.screens.ProfileManagementScreen
 import com.example.compose.ui.screens.ReservationHistoryScreen
-import com.example.compose.ui.screens.ChatBotScreen // 추가
+import com.example.compose.ui.screens.ChatBotScreen
+import com.example.compose.ui.screens.HospitalSearchResultScreen
 
 sealed class Screen(val route: String) {
     object Home : Screen("home")
@@ -27,7 +30,10 @@ sealed class Screen(val route: String) {
     object WritePost : Screen("write_post")
     object ProfileManagement : Screen("profile_management")
     object ReservationHistory : Screen("reservation_history")
-    object ChatBot : Screen("chatbot") // 추가: 챗봇 화면
+    object ChatBot : Screen("chatbot")
+    object HospitalSearchResult : Screen("hospital_search_result/{query}") {
+        fun createRoute(query: String) = "hospital_search_result/$query"
+    }
 }
 
 @Composable
@@ -137,12 +143,30 @@ fun AppNavigation(
             )
         }
 
-        // 챗봇 화면 추가
+        // 챗봇 화면
         composable(Screen.ChatBot.route) {
             ChatBotScreen(
                 onNavigateBack = {
                     navController.popBackStack()
                 }
+            )
+        }
+
+        // 병원 검색 결과 화면 추가
+        composable(
+            route = "hospital_search_result/{query}",
+            arguments = listOf(
+                navArgument("query") {
+                    type = NavType.StringType
+                }
+            )
+        ) { backStackEntry ->
+            val query = backStackEntry.arguments?.getString("query") ?: ""
+            HospitalSearchResultScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                searchQuery = query
             )
         }
     }
