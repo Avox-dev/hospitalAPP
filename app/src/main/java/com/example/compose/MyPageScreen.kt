@@ -80,7 +80,7 @@ fun MyPageScreen(
     }
 }
 
-// 마이페이지 컴포넌트 수정
+// 마이페이지 컴포넌트 수정 - 로그인 버튼 제거
 @Composable
 fun MyPageTopBar(
     navigateToScreen: (String) -> Unit,
@@ -101,22 +101,7 @@ fun MyPageTopBar(
         )
 
         // 로그인 상태에 따라 다른 UI 표시
-        if (currentUser == null) {
-            // 로그인 되지 않은 경우 로그인 버튼 표시
-            Button(
-                onClick = {
-                    // 로그인 화면으로 이동
-                    navigateToScreen("login")
-                },
-                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD0BCFF))
-            ) {
-                Text(
-                    text = "로그인",
-                    fontSize = 14.sp,
-                    color = Color.Black
-                )
-            }
-        } else {
+        if (currentUser != null) {
             // 로그인된 경우 사용자 ID 표시
             Row(
                 verticalAlignment = Alignment.CenterVertically
@@ -148,6 +133,7 @@ fun MyPageTopBar(
                 )
             }
         }
+        // 비로그인 상태에서는 로그인 버튼을 표시하지 않음
 
         // 나머지 코드는 그대로 유지
         Spacer(modifier = Modifier.width(16.dp))
