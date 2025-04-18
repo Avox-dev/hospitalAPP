@@ -35,7 +35,9 @@ fun RegisterPage(
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     var name by remember { mutableStateOf("") }
+    var birthdate by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
+    var address by remember { mutableStateOf("") }
     var agreeTerms by remember { mutableStateOf(false) }
 
     // RegisterState 감시
@@ -109,7 +111,7 @@ fun RegisterPage(
             OutlinedTextField(
                 value = userId,
                 onValueChange = { userId = it },
-                label = { Text("아이디") },
+                label = { Text("아이디 (4글자이상)") },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
@@ -123,7 +125,7 @@ fun RegisterPage(
             OutlinedTextField(
                 value = password,
                 onValueChange = { password = it },
-                label = { Text("비밀번호") },
+                label = { Text("비밀번호 (6자리이상)") },
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
@@ -192,6 +194,35 @@ fun RegisterPage(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // 생년월일 입력 필드
+            OutlinedTextField(
+                value = birthdate,
+                onValueChange = { birthdate = it },
+                label = { Text("생년월일 (YYYY-MM-DD)") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                shape = RoundedCornerShape(8.dp),
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // 주소 입력 필드
+            OutlinedTextField(
+                value = address,
+                onValueChange = { address = it },
+                label = { Text("주소") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                shape = RoundedCornerShape(8.dp),
+                singleLine = true
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             // 이용약관 동의
             Row(
                 modifier = Modifier
@@ -220,9 +251,9 @@ fun RegisterPage(
             Button(
                 onClick = {
                     // 입력 검증
-                    if (isInputValid(email, userId, password, confirmPassword, name, phone, agreeTerms)) {
-                        // 회원가입 처리
-                        viewModel.register(email, userId, password, name, phone)
+                    if (isInputValid(email, userId, password, confirmPassword, name, birthdate, phone, address, agreeTerms)) {
+                        // 회원가입 처리 - API 호출
+                        viewModel.register(email, userId, password, name, birthdate, phone, address)
                     }
                 },
                 modifier = Modifier
@@ -235,7 +266,7 @@ fun RegisterPage(
                 shape = RoundedCornerShape(8.dp),
                 // 로딩 상태일 때 버튼 비활성화
                 enabled = registerState != RegisterViewModel.RegisterState.Loading &&
-                        isInputValid(email, userId, password, confirmPassword, name, phone, agreeTerms)
+                        isInputValid(email, userId, password, confirmPassword, name, birthdate, phone, address, agreeTerms)
             ) {
                 if (registerState == RegisterViewModel.RegisterState.Loading) {
                     // 로딩 중일 때 CircularProgressIndicator 표시
@@ -264,7 +295,9 @@ private fun isInputValid(
     password: String,
     confirmPassword: String,
     name: String,
+    birthdate: String,
     phone: String,
+    address: String,
     agreeTerms: Boolean
 ): Boolean {
     // 기본적인 입력 검증 로직
@@ -273,10 +306,18 @@ private fun isInputValid(
     val isPasswordValid = password.isNotEmpty() && password.length >= 6
     val isPasswordMatch = password == confirmPassword
     val isNameValid = name.isNotEmpty()
+    val isBirthdateValid = birthdate.isEmpty() || isValidDateFormat(birthdate) // 생년월일은 선택적이지만 입력 시 형식 검증
     val isPhoneValid = phone.isNotEmpty() && phone.length >= 10
+    val isAddressValid = address.isEmpty() || address.length >= 5 // 주소는 선택적이지만 입력 시 최소 길이 검증
 
     return isEmailValid && isUserIdValid && isPasswordValid && isPasswordMatch &&
-            isNameValid && isPhoneValid && agreeTerms
+            isNameValid && isBirthdateValid && isPhoneValid && isAddressValid && agreeTerms
+}
+
+// 생년월일 형식 (YYYY-MM-DD) 검증
+private fun isValidDateFormat(date: String): Boolean {
+    val regex = Regex("""^\d{4}-\d{2}-\d{2}$""")
+    return regex.matches(date)
 }
 
 @Preview(showBackground = true)
