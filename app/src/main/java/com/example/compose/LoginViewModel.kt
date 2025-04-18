@@ -3,16 +3,18 @@ package com.example.compose.viewmodel
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import com.example.compose.data.User
 import com.example.compose.data.UserRepository
+import com.example.compose.data.ApiResult
+import com.example.compose.data.UserService
 
 class LoginViewModel : ViewModel() {
     private val userRepository = UserRepository.getInstance()
+    private val userService = UserService()
 
     // 로그인 상태를 관리하는 StateFlow
     private val _loginState = MutableStateFlow<LoginState>(LoginState.Initial)
@@ -25,21 +27,29 @@ class LoginViewModel : ViewModel() {
                 // 로딩 상태로 변경
                 _loginState.value = LoginState.Loading
 
-                // 로딩 시간 시뮬레이션 (실제 구현에서는 제거)
-                delay(1000)
+                // UserService를 통한 로그인 API 호출
+                val result = userService.login(userId, password)
 
-                // 여기서 실제 DB 쿼리나 API 호출이 이루어져야 합니다
-                // 예시로 간단한 검증만 수행합니다
-                val isSuccess = validateCredentials(userId, password)
-
-                if (isSuccess) {
-                    // 사용자 정보 저장 (api서버로 저장해야하나?)
-                    userRepository.setCurrentUser(User(userId = userId))
-                    // 로그인 성공
-                    _loginState.value = LoginState.Success("로그인에 성공했습니다!")
-                } else {
-                    // 로그인 실패
-                    _loginState.value = LoginState.Error("아이디 또는 비밀번호가 일치하지 않습니다.")
+                // 결과 처리
+                when (result) {
+                    is ApiResult.Success -> {
+                        // 로그인 성공 시 사용자 정보와 세션 ID 저장
+                        val userData = result.data
+                        if (userData != null) {
+                            userRepository.setCurrentUser(
+                                User(
+                                    userId = userId,
+                                )
+                            )
+                            _loginState.value = LoginState.Success("로그인에 성공했습니다!")
+                        } else {
+                            _loginState.value = LoginState.Error("서버로부터 유효한 데이터를 받지 못했습니다.")
+                        }
+                    }
+                    is ApiResult.Error -> {
+                        // 로그인 실패
+                        _loginState.value = LoginState.Error(result.message)
+                    }
                 }
             } catch (e: Exception) {
                 // 예외 발생
@@ -48,12 +58,6 @@ class LoginViewModel : ViewModel() {
         }
     }
 
-    // 임시 검증 함수 (실제로는 DB나 API를 통해 검증해야 함)
-    private suspend fun validateCredentials(userId: String, password: String): Boolean {
-        // 실제 구현에서는 여기서 DB 쿼리나 API 호출을 통해 자격 증명을 검증합니다
-        // 예시로 간단한 테스트 계정만 체크합니다
-        return userId == "test" && password == "1234"
-    }
 
     // 로그인 상태를 나타내는 sealed class
     sealed class LoginState {
