@@ -1,4 +1,4 @@
-// HomeScreen.kt - Modified with search functionality
+// HomeScreen.kt - Improved with Kakao Map API search
 package com.example.compose.ui.screens
 
 import androidx.compose.foundation.background
@@ -14,15 +14,12 @@ import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -33,11 +30,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -45,14 +39,6 @@ import com.example.compose.navigation.Screen
 import com.example.compose.ui.components.*
 import com.example.compose.ui.theme.*
 import com.example.compose.viewmodel.HomeViewModel
-
-// Required imports for the SearchBar function
-import androidx.compose.material3.TextField
-import androidx.compose.material3.Text
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.filled.Search
-import androidx.compose.ui.text.input.ImeAction
 
 @Composable
 fun HomeScreen(
@@ -62,17 +48,21 @@ fun HomeScreen(
     val apiResult by viewModel.apiResult.collectAsState()
     val dimens = appDimens()
 
+    // 현재 사용자 위치 (기본값: 서울시청)
+    val currentLocation = remember { mutableStateOf("주안동") }
+
     Column(modifier = Modifier.fillMaxSize()) {
         // 상단 앱바
-        TopAppBar()
+        TopAppBar(location = currentLocation.value)
 
-        // 검색창 - 수정된 부분
-        SearchBar(onSearch = { query ->
-            // 검색어가 "병원"을 포함하면 병원 검색 결과 화면으로 이동
-            if (query.contains("병원")) {
-                navigateToScreen("hospital_search_result/$query")
-            }
-        })
+        // 검색창 - 개선된 버전 사용
+        EnhancedSearchBar(
+            onSearch = { query ->
+                // 검색어를 이용해 병원 검색 결과 화면으로 이동
+                navigateToScreen(Screen.HospitalSearchResult.createRoute(query))
+            },
+            modifier = Modifier.padding(horizontal = dimens.paddingLarge.dp)
+        )
 
         // 스크롤 영역
         Column(
@@ -99,8 +89,8 @@ fun HomeScreen(
                         text = "동네 인기 병원",
                         backgroundColor = PopularHospital,
                         onClick = {
-                            // 병원 검색 결과 화면으로 이동
-                            navigateToScreen("hospital_search_result/인기병원")
+                            // 인기 병원 검색 결과 화면으로 이동
+                            navigateToScreen(Screen.HospitalSearchResult.createRoute("인기병원"))
                         }
                     )
                 }
@@ -114,8 +104,8 @@ fun HomeScreen(
                         text = "지금 문연 병원",
                         backgroundColor = OpenHospital,
                         onClick = {
-                            // 병원 검색 결과 화면으로 이동
-                            navigateToScreen("hospital_search_result/문연병원")
+                            // 문 연 병원 검색 결과 화면으로 이동
+                            navigateToScreen(Screen.HospitalSearchResult.createRoute("문연병원"))
                         }
                     )
                 }
@@ -148,8 +138,7 @@ fun HomeScreen(
                         name = "소아청소년과",
                         backgroundColor = PediatricsDept,
                         onClick = {
-                            // 병원 검색 결과 화면으로 이동
-                            navigateToScreen("hospital_search_result/소아청소년과")
+                            navigateToScreen(Screen.HospitalSearchResult.createRoute("소아청소년과"))
                         }
                     )
                 }
@@ -159,7 +148,7 @@ fun HomeScreen(
                         name = "이비인후과",
                         backgroundColor = EntDept,
                         onClick = {
-                            navigateToScreen("hospital_search_result/이비인후과")
+                            navigateToScreen(Screen.HospitalSearchResult.createRoute("이비인후과"))
                         }
                     )
                 }
@@ -169,7 +158,7 @@ fun HomeScreen(
                         name = "가정의학과",
                         backgroundColor = FamilyMedicineDept,
                         onClick = {
-                            navigateToScreen("hospital_search_result/가정의학과")
+                            navigateToScreen(Screen.HospitalSearchResult.createRoute("가정의학과"))
                         }
                     )
                 }
@@ -179,29 +168,9 @@ fun HomeScreen(
                         name = "산부인과",
                         backgroundColor = ObGynDept,
                         onClick = {
-                            navigateToScreen("hospital_search_result/산부인과")
+                            navigateToScreen(Screen.HospitalSearchResult.createRoute("산부인과"))
                         }
                     )
-                }
-            }
-
-            // API 요청 영역
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(dimens.paddingLarge.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = apiResult,
-                    fontSize = 18.sp,
-                    modifier = Modifier.padding(dimens.paddingMedium.dp)
-                )
-
-                Button(
-                    onClick = { viewModel.fetchApiData() }
-                ) {
-                    Text(text = "API 요청")
                 }
             }
         }
@@ -215,7 +184,7 @@ fun HomeScreen(
 }
 
 @Composable
-fun TopAppBar() {
+fun TopAppBar(location: String) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -225,11 +194,12 @@ fun TopAppBar() {
     ) {
         // 위치 정보
         Row(
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.clickable { /* 위치 선택 다이얼로그 표시 */ }
         ) {
             Icon(
                 imageVector = Icons.Filled.LocationOn,
-                contentDescription = "Location",
+                contentDescription = "위치",
                 tint = Color.Black,
                 modifier = Modifier.size(24.dp)
             )
@@ -237,7 +207,7 @@ fun TopAppBar() {
             Spacer(modifier = Modifier.width(4.dp))
 
             Text(
-                text = "주안동",
+                text = location,
                 fontSize = 18.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.Black
@@ -245,7 +215,7 @@ fun TopAppBar() {
 
             Icon(
                 imageVector = Icons.Filled.ArrowDropDown,
-                contentDescription = "Dropdown",
+                contentDescription = "드롭다운",
                 tint = Color.Black,
                 modifier = Modifier.size(24.dp)
             )
@@ -255,94 +225,33 @@ fun TopAppBar() {
         Row {
             Icon(
                 imageVector = Icons.Filled.Person,
-                contentDescription = "Profile",
+                contentDescription = "프로필",
                 tint = Color.Black,
                 modifier = Modifier
                     .size(24.dp)
-                    .clickable { }
-                    .padding(end = 16.dp)
+                    .clickable { /* 프로필 화면으로 이동 */ }
             )
+
+            Spacer(modifier = Modifier.width(16.dp))
 
             Icon(
                 imageVector = Icons.Filled.Notifications,
-                contentDescription = "Notifications",
+                contentDescription = "알림",
                 tint = Color.Black,
                 modifier = Modifier
                     .size(24.dp)
-                    .padding(end = 16.dp)
+                    .clickable { /* 알림 화면으로 이동 */ }
             )
+
+            Spacer(modifier = Modifier.width(16.dp))
 
             Icon(
                 imageVector = Icons.Filled.Star,
-                contentDescription = "Star",
+                contentDescription = "즐겨찾기",
                 tint = Color.Black,
-                modifier = Modifier.size(24.dp)
-            )
-        }
-    }
-}
-
-@Composable
-fun SearchBar(onSearch: (String) -> Unit = {}) {
-    val dimens = appDimens()
-    var searchText by remember { mutableStateOf("") }
-
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(48.dp)
-            .padding(horizontal = dimens.paddingLarge.dp),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = SearchBarBackground),
-        elevation = CardDefaults.cardElevation(0.dp)
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(horizontal = dimens.paddingLarge.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(
-                imageVector = Icons.Default.Search,
-                contentDescription = "Search",
-                tint = TextSecondary,
-                modifier = Modifier.size(dimens.iconSize.dp)
-            )
-
-            Spacer(modifier = Modifier.width(dimens.paddingMedium.dp))
-
-            // 표준 TextField 사용
-            TextField(
-                value = searchText,
-                onValueChange = { searchText = it },
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .weight(1f),
-                placeholder = {
-                    Text(
-                        text = "질병, 진료과, 병원을 검색해보세요.",
-                        fontSize = 14.sp,
-                        color = TextSecondary
-                    )
-                },
-                colors = TextFieldDefaults.colors(
-                    focusedContainerColor = Color.Transparent,
-                    unfocusedContainerColor = Color.Transparent,
-                    disabledContainerColor = Color.Transparent,
-                    focusedIndicatorColor = Color.Transparent,
-                    unfocusedIndicatorColor = Color.Transparent,
-                ),
-                singleLine = true,
-                maxLines = 1,
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                keyboardActions = KeyboardActions(
-                    onSearch = {
-                        if (searchText.isNotEmpty()) {
-                            onSearch(searchText)
-                            searchText = ""  // 검색 후 입력 필드 초기화
-                        }
-                    }
-                )
+                    .size(24.dp)
+                    .clickable { /* 즐겨찾기 화면으로 이동 */ }
             )
         }
     }
@@ -355,7 +264,8 @@ fun PneumoniaBanner() {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(dimens.bannerHeight.dp),
+            .height(dimens.bannerHeight.dp)
+            .clickable { /* 상세 화면으로 이동 */ },
         shape = RoundedCornerShape(dimens.cornerRadius.dp),
         elevation = CardDefaults.cardElevation(0.dp)
     ) {
@@ -400,24 +310,6 @@ fun PneumoniaBanner() {
                     .background(Color(0x80000000))
                     .padding(horizontal = dimens.paddingMedium.dp, vertical = 4.dp)
             )
-
-            Row(
-                modifier = Modifier.align(Alignment.BottomEnd)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(60.dp)
-                        .background(Pink40)
-                )
-
-                Box(
-                    modifier = Modifier
-                        .size(30.dp)
-                        .offset(x = (-15).dp, y = 10.dp)
-                        .clip(CircleShape)
-                        .background(Purple40)
-                )
-            }
         }
     }
 }
@@ -470,7 +362,8 @@ fun ChildGrowthBanner() {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(dimens.growthBannerHeight.dp),
+            .height(dimens.growthBannerHeight.dp)
+            .clickable { /* 상세 화면으로 이동 */ },
         shape = RoundedCornerShape(dimens.cornerRadius.dp),
         colors = CardDefaults.cardColors(containerColor = BannerBackground),
         elevation = CardDefaults.cardElevation(0.dp)
@@ -483,7 +376,7 @@ fun ChildGrowthBanner() {
             Column(
                 modifier = Modifier.align(Alignment.CenterStart)
             ) {
-                // NEW 배지 - Text를 Box 안에 넣어 배경을 적용
+                // NEW 배지
                 Box(
                     modifier = Modifier
                         .background(BadgeBackground)
@@ -513,13 +406,6 @@ fun ChildGrowthBanner() {
                     color = TextSecondary
                 )
             }
-
-            // 이미지가 들어갈 자리
-            Box(
-                modifier = Modifier
-                    .size(60.dp)
-                    .align(Alignment.CenterEnd)
-            )
         }
     }
 }
