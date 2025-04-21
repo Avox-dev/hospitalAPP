@@ -1,0 +1,92 @@
+// ReservationViewModel.kt
+package com.example.compose.viewmodel
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.compose.data.ApiResult
+import com.example.compose.data.ReservationService
+import com.example.compose.data.UserRepository
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
+
+class ReservationViewModel : ViewModel() {
+    private val reservationService = ReservationService()
+    private val userRepository = UserRepository.getInstance()
+
+    // 예약 상태를 위한 StateFlow
+    private val _reservationState = MutableStateFlow<ReservationState>(ReservationState.Initial)
+    val reservationState: StateFlow<ReservationState> = _reservationState
+
+    /**
+     * 예약하기
+     * @param hospital 병원명
+     * @param address 병원 주소
+     * @param message 예약 메시지/증상
+     * @param email 이메일 (선택)
+     */
+    fun makeReservation(
+        hospital: String,
+        address: String,
+        message: String,
+        email: String? = null
+    ) {
+        // 현재 로그인된 사용자 확인
+        val currentUser = userRepository.currentUser.value
+        if (currentUser == null) {
+            _reservationState.value = ReservationState.Error("로그인이 필요한 서비스입니다.")
+            return
+        }
+
+        viewModelScope.launch {
+            try {
+                // 로딩 상태로 변경
+                _reservationState.value = ReservationState.Loading
+
+                // 예약자 정보 설정 (현재 로그인된 사용자 정보 사용)
+                val name = currentUser.userName
+                val phone = "010-0000-0000" // 실제 구현에서는 사용자 정보에서 가져오거나 입력받아야 함
+
+                // ReservationService를 통한 예약 API 호출
+                val result = reservationService.makeReservation(
+                    name = name,
+                    phone = phone,
+                    hospital = hospital,
+                    address = address,
+                    message = message,
+                    email = email
+                )
+
+                // 결과 처리
+                when (result) {
+                    is ApiResult.Success -> {
+                        // 성공 응답 처리
+                        _reservationState.value = ReservationState.Success("예약이 완료되었습니다.")
+                    }
+                    is ApiResult.Error -> {
+                        // 오류 응답 처리
+                        _reservationState.value = ReservationState.Error(result.message)
+                    }
+                }
+            } catch (e: Exception) {
+                // 예외 발생
+                _reservationState.value = ReservationState.Error("예약 중 오류가 발생했습니다: ${e.message}")
+            }
+        }
+    }
+
+    /**
+     * 에러 메시지 초기화
+     */
+    fun resetState() {
+        _reservationState.value = ReservationState.Initial
+    }
+
+    // 예약 상태를 나타내는 sealed class
+    sealed class ReservationState {
+        object Initial : ReservationState()
+        object Loading : ReservationState()
+        data class Success(val message: String) : ReservationState()
+        data class Error(val message: String) : ReservationState()
+    }
+}

@@ -1,4 +1,4 @@
-// Navigation.kt - Updated with hospital search
+// Navigation.kt - Updated with hospital search and reservation
 package com.example.compose.navigation
 
 import androidx.compose.runtime.Composable
@@ -152,7 +152,7 @@ fun AppNavigation(
             )
         }
 
-        // 병원 검색 결과 화면 추가
+        // 병원 검색 결과 화면 추가 - navigateToScreen 파라미터 추가
         composable(
             route = "hospital_search_result/{query}",
             arguments = listOf(
@@ -166,7 +166,10 @@ fun AppNavigation(
                 onNavigateBack = {
                     navController.popBackStack()
                 },
-                searchQuery = query
+                searchQuery = query,
+                navigateToScreen = { route ->
+                    navController.navigate(route)
+                }
             )
         }
     }

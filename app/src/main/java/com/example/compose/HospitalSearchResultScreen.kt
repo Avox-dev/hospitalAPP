@@ -1,4 +1,4 @@
-// HospitalSearchResultScreen.kt - 업데이트된 버전
+// HospitalSearchResultScreen.kt - 예약 기능 추가 버전
 package com.example.compose.ui.screens
 
 import androidx.compose.foundation.background
@@ -20,32 +20,80 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-//import com.example.compose.KakaoMap.KakaoMap
 import com.example.compose.data.PlaceSearchResult
+import com.example.compose.data.UserRepository
+import com.example.compose.navigation.Screen
 import com.example.compose.ui.components.KakaoMapView
+import com.example.compose.ui.components.ReservationDialog
 import com.example.compose.ui.theme.Purple80
 import com.example.compose.viewmodel.HospitalSearchViewModel
+import com.example.compose.viewmodel.ReservationViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HospitalSearchResultScreen(
     onNavigateBack: () -> Unit,
     searchQuery: String,
-    viewModel: HospitalSearchViewModel = viewModel()
+    navigateToScreen: (String) -> Unit = {},
+    hospitalSearchViewModel: HospitalSearchViewModel = viewModel(),
+    reservationViewModel: ReservationViewModel = viewModel()
 ) {
     // 검색 결과 및 상태 관찰
-    val searchResults by viewModel.searchResults.collectAsState()
-    val selectedPlace by viewModel.selectedPlace.collectAsState()
-    val isLoading by viewModel.isLoading.collectAsState()
-    val errorMessage by viewModel.errorMessage.collectAsState()
-    val lastQuery by viewModel.lastQuery.collectAsState()
+    val searchResults by hospitalSearchViewModel.searchResults.collectAsState()
+    val selectedPlace by hospitalSearchViewModel.selectedPlace.collectAsState()
+    val isLoading by hospitalSearchViewModel.isLoading.collectAsState()
+    val errorMessage by hospitalSearchViewModel.errorMessage.collectAsState()
+    val lastQuery by hospitalSearchViewModel.lastQuery.collectAsState()
+
+    // 예약 상태 관찰
+    val reservationState by reservationViewModel.reservationState.collectAsState()
+
+    // 예약 다이얼로그 표시 상태
+    var showReservationDialog by remember { mutableStateOf(false) }
+
+    // 로그인 상태 확인
+    val userRepository = UserRepository.getInstance()
+    val currentUser by userRepository.currentUser.collectAsState()
+
+    // 스낵바 상태
+    val snackbarHostState = remember { SnackbarHostState() }
+
     // 서울시청 좌표 (x: 경도, y: 위도) 현위치 값으로 변경 필요
     val seoulCityHallLongitude = 126.977963 // 경도(x)
     val seoulCityHallLatitude = 37.566535   // 위도(y)
+
     // 검색 수행
     LaunchedEffect(searchQuery) {
         if (searchQuery != lastQuery) {
-            viewModel.searchHospitals(searchQuery,seoulCityHallLongitude,seoulCityHallLatitude)
+            hospitalSearchViewModel.searchHospitals(searchQuery, seoulCityHallLongitude, seoulCityHallLatitude)
+        }
+    }
+
+    // 예약 상태 변경 사이드 이펙트
+    LaunchedEffect(reservationState) {
+        when (reservationState) {
+            is ReservationViewModel.ReservationState.Success -> {
+                showReservationDialog = false
+                snackbarHostState.showSnackbar(
+                    message = (reservationState as ReservationViewModel.ReservationState.Success).message
+                )
+                reservationViewModel.resetState()
+            }
+            is ReservationViewModel.ReservationState.Error -> {
+                if ((reservationState as ReservationViewModel.ReservationState.Error).message.contains("로그인")) {
+                    showReservationDialog = false
+                    snackbarHostState.showSnackbar(
+                        message = "로그인이 필요한 서비스입니다.",
+                        actionLabel = "로그인"
+                    ).let { result ->
+                        if (result == SnackbarResult.ActionPerformed) {
+                            navigateToScreen(Screen.Login.route)
+                        }
+                    }
+                    reservationViewModel.resetState()
+                }
+            }
+            else -> { /* 다른 상태는 처리하지 않음 */ }
         }
     }
 
@@ -62,7 +110,8 @@ fun HospitalSearchResultScreen(
                     containerColor = Color.White
                 )
             )
-        }
+        },
+        snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
         Box(
             modifier = Modifier
@@ -78,12 +127,11 @@ fun HospitalSearchResultScreen(
                         .fillMaxWidth()
                         .weight(1f)
                 ) {
-                    //KakaoMap()
                     KakaoMapView(
                         places = searchResults,
                         selectedPlace = selectedPlace,
                         onMarkerClick = { place ->
-                            viewModel.selectPlace(place)
+                            hospitalSearchViewModel.selectPlace(place)
                         }
                     )
 
@@ -122,7 +170,7 @@ fun HospitalSearchResultScreen(
                                 .align(Alignment.BottomCenter)
                                 .padding(16.dp),
                             action = {
-                                TextButton(onClick = { viewModel.clearError() }) {
+                                TextButton(onClick = { hospitalSearchViewModel.clearError() }) {
                                     Text("확인")
                                 }
                             }
@@ -161,11 +209,32 @@ fun HospitalSearchResultScreen(
                             HospitalItem(
                                 place = place,
                                 isSelected = selectedPlace?.id == place.id,
-                                onClick = { viewModel.selectPlace(place) }
+                                onClick = { hospitalSearchViewModel.selectPlace(place) },
+                                onReservationClick = {
+                                    if (currentUser != null) {
+                                        // 로그인된 상태면 예약 다이얼로그 표시
+                                        showReservationDialog = true
+                                    } else {
+                                        // 로그인이 필요하다는 메시지 표시
+                                        reservationViewModel.makeReservation("", "", "") // 로그인 체크만 위한 호출
+                                    }
+                                }
                             )
                         }
                     }
                 }
+            }
+
+            // 예약 다이얼로그
+            if (showReservationDialog && selectedPlace != null) {
+                ReservationDialog(
+                    place = selectedPlace!!,
+                    onDismiss = { showReservationDialog = false },
+                    onReservationSuccess = {
+                        // 예약 성공 처리 (이미 LaunchedEffect에서 처리됨)
+                    },
+                    viewModel = reservationViewModel
+                )
             }
         }
     }
@@ -175,7 +244,8 @@ fun HospitalSearchResultScreen(
 fun HospitalItem(
     place: PlaceSearchResult,
     isSelected: Boolean,
-    onClick: () -> Unit
+    onClick: () -> Unit,
+    onReservationClick: () -> Unit
 ) {
     Card(
         modifier = Modifier
@@ -269,7 +339,7 @@ fun HospitalItem(
             // 예약 버튼
             if (isSelected) {
                 Button(
-                    onClick = { /* 예약 화면으로 이동 */ },
+                    onClick = onReservationClick,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(40.dp),
