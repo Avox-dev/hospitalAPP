@@ -1,4 +1,3 @@
-// KakaoMapComponent.kt
 package com.example.compose.ui.components
 
 import android.util.Log
@@ -32,16 +31,10 @@ import com.kakao.vectormap.label.LabelStyle
 import com.kakao.vectormap.label.LabelStyles
 import java.util.UUID
 import com.example.compose.R
+import com.kakao.vectormap.label.OrderingType
 
 private const val TAG = "KakaoMapView"
 
-/**
- * 카카오맵을 표시하고 검색 결과 마커를 찍는 컴포저블
- * @param places 검색된 장소 리스트
- * @param selectedPlace 현재 선택된 장소
- * @param onMapClick 지도 클릭 이벤트 핸들러
- * @param onMarkerClick 마커 클릭 이벤트 핸들러
- */
 @Composable
 fun KakaoMapView(
     places: List<PlaceSearchResult> = emptyList(),
@@ -53,13 +46,9 @@ fun KakaoMapView(
     val mapView = remember { MapView(context) }
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    // 지도 객체와 마커 레이어 관리
     val mapState = remember { MapState() }
-
-    // 맵 초기화 상태 추적
     var isMapReady by remember { mutableStateOf(false) }
 
-    // 라이프사이클 관리
     DisposableEffect(lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
@@ -69,9 +58,7 @@ fun KakaoMapView(
                 else -> {}
             }
         }
-
         lifecycleOwner.lifecycle.addObserver(observer)
-
         onDispose {
             lifecycleOwner.lifecycle.removeObserver(observer)
         }
@@ -81,165 +68,137 @@ fun KakaoMapView(
         AndroidView(
             factory = {
                 mapView.apply {
-                    start(
-                        object : MapLifeCycleCallback() {
-                            override fun onMapResumed() {
-                                Log.d(TAG, "onMapResumed called")
-                            }
-                            override fun onMapDestroy() {
-                                Log.d(TAG, "onMapDestroy called")
-                            }
-                            override fun onMapError(error: Exception?) {
-                                Log.e(TAG, "onMapError: ${error?.message}", error)
-                            }
-                        },
-                        object : KakaoMapReadyCallback() {
-                            override fun onMapReady(kakaoMap: KakaoMap) {
-                                Log.d(TAG, "onMapReady called - map initialized")
-                                // 지도 객체 저장
-                                mapState.map = kakaoMap
-
-                                // LabelLayerOptions 생성 - ID 지정
-                                val layerOptions = LabelLayerOptions.from("marker_layer")
-                                Log.d(TAG, "Creating label layer with options: $layerOptions")
-
-                                // 레이어 추가
-                                val labelManager = kakaoMap.labelManager
-                                if (labelManager == null) {
-                                    Log.e(TAG, "labelManager is null!")
-                                    return
-                                }
-
-                                val labelLayer = labelManager.addLayer(layerOptions)
-                                if (labelLayer == null) {
-                                    Log.e(TAG, "Failed to create label layer!")
-                                    return
-                                }
-
-                                Log.d(TAG, "Label layer successfully created: ${labelLayer.layerId}")
-                                // 생성한 레이어를 mapState에 저장해야 함
-                                mapState.labelLayer = labelLayer
-
-                                val initialPosition = LatLng.from(37.566826, 126.9786567)
-                                val cameraUpdate = CameraUpdateFactory.newCenterPosition(initialPosition, 12)
-                                kakaoMap.moveCamera(cameraUpdate)
-                                Log.d(TAG, "Initial camera position set")
-
-                                // 맵 초기화 완료 표시
-                                isMapReady = true
-
-                                // 선택된 장소가 있으면 카메라 이동
-                                selectedPlace?.let {
-                                    val position = LatLng.from(it.latitude, it.longitude)
-                                    Log.d(TAG, "Moving camera to selected place: ${it.name}")
-                                    val selectedCameraUpdate = CameraUpdateFactory.newCenterPosition(position, 15)
-                                    kakaoMap.moveCamera(selectedCameraUpdate, CameraAnimation.from(300))
-                                }
-                            }
+                    start(object : MapLifeCycleCallback() {
+                        override fun onMapDestroy() {}
+                        override fun onMapError(error: Exception?) {
+                            Log.e(TAG, "Map initialization error", error)
                         }
-                    )
+                    }, object : KakaoMapReadyCallback() {
+                        override fun onMapReady(kakaoMap: KakaoMap) {
+                            mapState.map = kakaoMap
+
+                            kakaoMap.labelManager?.let { labelManager ->
+                                // 먼저 스타일 등록
+                                val defaultStyle = LabelStyle.from(R.drawable.ic_marker)
+                                labelManager.addLabelStyles(LabelStyles.from("defaultStyle", defaultStyle))
+
+                                val layerOptions = LabelLayerOptions.from("marker_layer")
+                                    .setOrderingType(OrderingType.Rank)
+                                    .setZOrder(1)
+
+                                mapState.labelLayer = labelManager.addLayer(layerOptions)
+                            }
+
+                            val initialPosition = LatLng.from(37.566826, 126.9786567)
+                            val cameraUpdate =
+                                CameraUpdateFactory.newCenterPosition(initialPosition, 12)
+                            kakaoMap.moveCamera(cameraUpdate)
+
+                            isMapReady = true
+                            Log.d(TAG, "Map is ready")
+                        }
+                    })
                 }
                 mapView
             }
         )
     }
 
-    // 맵이 준비되고 장소가 있을 때만 마커 업데이트
     LaunchedEffect(isMapReady, places) {
-        if (!isMapReady) {
-            Log.d(TAG, "Map not ready yet, waiting for initialization")
-            return@LaunchedEffect
-        }
+        if (!isMapReady || mapState.labelLayer == null) return@LaunchedEffect
 
-        Log.d(TAG, "Map is ready and places updated: ${places.size} places")
-
-        if (places.isEmpty()) {
-            Log.d(TAG, "No places to display, skipping marker update")
-            return@LaunchedEffect
-        }
-
-        if (mapState.map == null) {
-            Log.e(TAG, "Map is null, cannot add markers")
-            return@LaunchedEffect
-        }
-
-        if (mapState.labelLayer == null) {
-            Log.e(TAG, "Label layer is null, cannot add markers")
-            return@LaunchedEffect
-        }
-
-        // 기존 마커 삭제
-        mapState.labelLayer?.removeAll()
-        mapState.markerMap.clear()
-        Log.d(TAG, "Cleared existing markers")
-
-        // 검색 결과 마커 추가
-        places.forEachIndexed { index, place ->
-            val position = LatLng.from(place.latitude, place.longitude)
-            Log.d(TAG, "Adding marker for place[$index]: ${place.name} at position: $position")
-
-            // ID 생성
-            val labelId = UUID.randomUUID().toString()
-
-            // 마커와 장소 정보 매핑
-            mapState.markerMap[labelId] = place
-
-            // 마커 스타일 생성 - 기본 스타일 사용 (아이콘 리소스 없이도 마커가 표시됨)
-            try {
-                // 기본 스타일 사용하여 마커 생성
-                val labelStyle = LabelStyle.from(R.drawable.outline_label_24)
-
-                val labelStyles = LabelStyles.from(labelStyle)
-
-
-                // 마커 추가 - 레이블 ID 포함
-                val labelOptions = LabelOptions.from(labelId, position).apply {
-                    styles = labelStyles
-                    // 마커 클릭 이벤트 설정
-                    clickable = true
-                }
-
-                val addedLabel = mapState.labelLayer?.addLabel(labelOptions)
-                if (addedLabel == null) {
-                    Log.e(TAG, "Failed to add label for place: ${place.name}")
-                } else {
-                    Log.d(TAG, "Successfully added label for place: ${place.name}")
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Error adding label for place: ${place.name}", e)
+        try {
+            // 레이어 상태 체크
+            mapState.labelLayer?.let { layer ->
+                val layerId = layer.getLayerId()
+                val labelCount = layer.getLabelCount()
+                val zOrder = layer.getZOrder()
+                Log.d(TAG, "Layer ID: $layerId")
+                Log.d(TAG, "Initial Label Count: $labelCount")
+                Log.d(TAG, "Layer Z-Order: $zOrder")
             }
+
+            mapState.labelLayer?.removeAll()
+            mapState.markerMap.clear()
+
+            places.forEach { place ->
+                try {
+                    val position = LatLng.from(place.latitude, place.longitude)
+                    val labelId = UUID.randomUUID().toString()
+
+                    // 마커 생성 부분도 약간 수정
+                    val labelStyle = LabelStyle.from(R.drawable.ic_marker)
+                    val labelStyles = mapState.map?.labelManager?.addLabelStyles(
+                        LabelStyles.from(labelStyle)
+                    ) // labelManager를 통해 스타일 추가
+
+                    // labelOptions에서 직접 스타일 사용
+                    val labelOptions = LabelOptions.from(labelId, position).apply {
+                        styles = mapState.map?.labelManager?.getLabelStyles("defaultStyle")
+                        setRank(1)
+                        setVisible(true)
+                    }
+                    // 생성 후 상태 확인
+                    Log.d(TAG, """
+                        Label Options State for ${place.name}:
+                        - ID: $labelId
+                        - Position: $position
+                        - Visible: ${labelOptions.isVisible()}
+                        - Has Styles: ${labelOptions.styles != null}
+                    """.trimIndent())
+
+                    mapState.labelLayer?.addLabel(labelOptions)?.let { label ->
+                        label.show()
+
+                        // 라벨이 실제로 레이어에 있는지 확인
+                        val isLabelInLayer = mapState.labelLayer?.hasLabel(labelId) ?: false
+                        val currentLabelCount = mapState.labelLayer?.getLabelCount() ?: 0
+
+                        Log.d(TAG, """
+                        Marker ${place.name}:
+                        - Label ID: $labelId
+                        - Is in layer: $isLabelInLayer
+                        - Current label count: $currentLabelCount
+                    """.trimIndent())
+
+                        mapState.markerMap[labelId] = place
+                    }
+                } catch (e: Exception) {
+                    Log.e(TAG, "Error adding marker for place: ${place.name}", e)
+                }
+            }
+
+            // 최종 상태 확인
+            mapState.labelLayer?.let { layer ->
+                val finalLabelCount = layer.getLabelCount()
+                val isLayerVisible = layer.isVisible()
+                Log.d(TAG, """
+                Final Layer State:
+                - Label Count: $finalLabelCount
+                - Is Visible: $isLayerVisible
+            """.trimIndent())
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Error in marker update process", e)
         }
-
-        // 이전 방식과 동일하게 유지 (마커 클릭 이벤트 별도 처리 없음)
-        Log.d(TAG, "마커 설정 완료 - 클릭 이벤트는 별도로 처리되지 않음")
-
-        Log.d(TAG, "Finished adding ${places.size} markers to map")
     }
 
-    // 선택된 장소가 변경되면 해당 위치로 카메라 이동
-    LaunchedEffect(isMapReady, selectedPlace) {
-        if (!isMapReady) {
-            Log.d(TAG, "Map not ready yet for camera movement")
-            return@LaunchedEffect
-        }
+    LaunchedEffect(selectedPlace) {
+        if (!isMapReady || selectedPlace == null) return@LaunchedEffect
 
-        Log.d(TAG, "LaunchedEffect(selectedPlace) triggered: $selectedPlace")
-
-        selectedPlace?.let {
-            val position = LatLng.from(it.latitude, it.longitude)
-            Log.d(TAG, "Moving camera to selected place: ${it.name} at position: $position")
-
+        try {
+            val position = LatLng.from(selectedPlace.latitude, selectedPlace.longitude)
             val cameraUpdate = CameraUpdateFactory.newCenterPosition(position, 15)
             mapState.map?.moveCamera(cameraUpdate, CameraAnimation.from(300))
+            Log.d(TAG, "Camera moved to selected place: ${selectedPlace.name}")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error moving camera to selected place", e)
         }
     }
 }
 
-/**
- * 지도 상태를 관리하는 클래스
- */
 private class MapState {
     var map: KakaoMap? = null
     var labelLayer: LabelLayer? = null
-    val markerMap = mutableMapOf<String, PlaceSearchResult>() // 마커 ID와 장소 정보 매핑
+    val markerMap = mutableMapOf<String, PlaceSearchResult>()
 }
