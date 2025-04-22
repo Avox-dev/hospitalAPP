@@ -21,23 +21,22 @@ class UserService {
      * @param address 주소
      * @return 회원가입 처리 결과
      */
+    // UserService.kt의 register 메서드 수정
     suspend fun register(
         email: String,
         userId: String,
         password: String,
-        name: String,
         birthdate: String,
         phone: String,
         address: String
     ): ApiResult<JSONObject> = withContext(Dispatchers.IO) {
         // JSON 요청 본문 생성
         val jsonBody = JSONObject().apply {
-            put("username", userId)
+            put("username", userId)     // username 필드명 맞춤
             put("password", password)
             put("email", email)
-            put("name", name)
-            put("phone", phone)
             put("birthdate", birthdate)
+            put("phone", phone)
             put("address", address)
         }
 
@@ -87,4 +86,15 @@ class UserService {
         // API 요청 실행
         ApiServiceCommon.postRequest(ApiConstants.USER_UPDATE_URL, jsonBody)
     }
+
+    /**
+     * 로그아웃 API 요청
+     * @return 로그아웃 처리 결과
+     */
+    suspend fun logout(): ApiResult<JSONObject> = withContext(Dispatchers.IO) {
+        // 로그아웃은 별도의 데이터 없이 POST 요청만 수행
+        ApiServiceCommon.postRequest(ApiConstants.LOGOUT_URL, JSONObject())
+    }
+
 }
+

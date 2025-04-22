@@ -45,6 +45,7 @@ fun HomeScreen(
     navigateToScreen: (String) -> Unit,
     viewModel: HomeViewModel = viewModel()
 ) {
+
     val apiResult by viewModel.apiResult.collectAsState()
     val dimens = appDimens()
 
@@ -441,3 +442,4 @@ fun DepartmentItem(
         )
     }
 }
+

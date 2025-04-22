@@ -8,6 +8,7 @@ import com.example.compose.data.UserService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import org.json.JSONObject
 
 class RegisterViewModel : ViewModel() {
 
@@ -26,14 +27,21 @@ class RegisterViewModel : ViewModel() {
                 _registerState.value = RegisterState.Loading
 
                 // UserService를 통한 회원가입 API 호출
-                val result = userService.register(email, userId, password, name, birthdate, phone, address)
+                val result = userService.register(email, userId, password, birthdate, phone, address)
 
                 // 결과 처리
                 when (result) {
                     is ApiResult.Success -> {
                         // 성공 응답 처리
-                        // 필요한 경우 result.data에서 추가 정보 추출 가능
-                        _registerState.value = RegisterState.Success("회원가입이 완료되었습니다.")
+                        val responseData = result.data
+                        val status = responseData.optString("status")
+                        val message = responseData.optString("message")
+
+                        if (status == "success") {
+                            _registerState.value = RegisterState.Success(message)
+                        } else {
+                            _registerState.value = RegisterState.Error(message)
+                        }
                     }
                     is ApiResult.Error -> {
                         // 오류 응답 처리

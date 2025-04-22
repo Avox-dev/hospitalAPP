@@ -247,7 +247,7 @@ fun RegisterPage(
 
             Spacer(modifier = Modifier.height(24.dp))
 
-            // 회원가입 버튼
+// RegisterPage.kt 파일의 회원가입 버튼 onClick 수정 부분
             Button(
                 onClick = {
                     // 입력 검증

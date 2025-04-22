@@ -11,6 +11,7 @@ import com.example.compose.data.User
 import com.example.compose.data.UserRepository
 import com.example.compose.data.ApiResult
 import com.example.compose.data.UserService
+import org.json.JSONObject
 
 class LoginViewModel : ViewModel() {
     private val userRepository = UserRepository.getInstance()
@@ -33,17 +34,42 @@ class LoginViewModel : ViewModel() {
                 // 결과 처리
                 when (result) {
                     is ApiResult.Success -> {
-                        // 로그인 성공 시 사용자 정보와 세션 ID 저장
-                        val userData = result.data
-                        if (userData != null) {
-                            userRepository.setCurrentUser(
-                                User(
-                                    userId = userId,
+                        // 로그인 성공 시 사용자 정보 처리
+                        val responseData = result.data
+                        val status = responseData.optString("status")
+                        val message = responseData.optString("message")
+
+                        if (status == "success") {
+                            // 사용자 데이터 추출
+                            val userData = responseData.optJSONObject("data")
+                            val sessionId = responseData.optString("session", "")
+                            if (userData != null) {
+                                val username = userData.optString("username")
+                                val email = userData.optString("email")
+                                val phone = userData.optString("phone", "")
+                                val birthdate = userData.optString("birthdate", "")
+                                val address = userData.optString("address", "")
+
+                                // 사용자 정보 저장
+                                userRepository.setCurrentUser(
+                                    User(
+                                        userId = username,
+                                        userName = username,
+                                        email = email,
+                                        phone = phone,
+                                        birthdate = birthdate,
+                                        address = address
+                                    )
                                 )
-                            )
-                            _loginState.value = LoginState.Success("로그인에 성공했습니다!")
+                                // 세션 ID 저장
+                                userRepository.setSessionId(sessionId)
+
+                                _loginState.value = LoginState.Success(message)
+                            } else {
+                                _loginState.value = LoginState.Error("사용자 정보를 불러오는데 실패했습니다.")
+                            }
                         } else {
-                            _loginState.value = LoginState.Error("서버로부터 유효한 데이터를 받지 못했습니다.")
+                            _loginState.value = LoginState.Error(message)
                         }
                     }
                     is ApiResult.Error -> {
