@@ -1,6 +1,5 @@
 package com.example.compose.ui.components
 
-import android.util.Log
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
@@ -32,8 +31,6 @@ import com.kakao.vectormap.label.LabelStyles
 import java.util.UUID
 import com.example.compose.R
 import com.kakao.vectormap.label.OrderingType
-
-private const val TAG = "KakaoMapView"
 
 @Composable
 fun KakaoMapView(
@@ -70,16 +67,16 @@ fun KakaoMapView(
                 mapView.apply {
                     start(object : MapLifeCycleCallback() {
                         override fun onMapDestroy() {}
-                        override fun onMapError(error: Exception?) {
-                            Log.e(TAG, "Map initialization error", error)
-                        }
+                        override fun onMapError(error: Exception?) {}
                     }, object : KakaoMapReadyCallback() {
                         override fun onMapReady(kakaoMap: KakaoMap) {
                             mapState.map = kakaoMap
 
                             kakaoMap.labelManager?.let { labelManager ->
-                                // 먼저 스타일 등록
+                                // 마커 스타일 설정 - 앵커 포인트 설정
                                 val defaultStyle = LabelStyle.from(R.drawable.ic_marker)
+                                    .setAnchorPoint(0.5f, 1.0f)  // 마커의 아래쪽 중앙이 위치 좌표에 오도록 설정
+
                                 labelManager.addLabelStyles(LabelStyles.from("defaultStyle", defaultStyle))
 
                                 val layerOptions = LabelLayerOptions.from("marker_layer")
@@ -95,7 +92,6 @@ fun KakaoMapView(
                             kakaoMap.moveCamera(cameraUpdate)
 
                             isMapReady = true
-                            Log.d(TAG, "Map is ready")
                         }
                     })
                 }
@@ -108,16 +104,6 @@ fun KakaoMapView(
         if (!isMapReady || mapState.labelLayer == null) return@LaunchedEffect
 
         try {
-            // 레이어 상태 체크
-            mapState.labelLayer?.let { layer ->
-                val layerId = layer.getLayerId()
-                val labelCount = layer.getLabelCount()
-                val zOrder = layer.getZOrder()
-                Log.d(TAG, "Layer ID: $layerId")
-                Log.d(TAG, "Initial Label Count: $labelCount")
-                Log.d(TAG, "Layer Z-Order: $zOrder")
-            }
-
             mapState.labelLayer?.removeAll()
             mapState.markerMap.clear()
 
@@ -126,60 +112,27 @@ fun KakaoMapView(
                     val position = LatLng.from(place.latitude, place.longitude)
                     val labelId = UUID.randomUUID().toString()
 
-                    // 마커 생성 부분도 약간 수정
-                    val labelStyle = LabelStyle.from(R.drawable.ic_marker)
-                    val labelStyles = mapState.map?.labelManager?.addLabelStyles(
-                        LabelStyles.from(labelStyle)
-                    ) // labelManager를 통해 스타일 추가
-
-                    // labelOptions에서 직접 스타일 사용
+                    // 마커 생성
                     val labelOptions = LabelOptions.from(labelId, position).apply {
                         styles = mapState.map?.labelManager?.getLabelStyles("defaultStyle")
                         setRank(1)
                         setVisible(true)
                     }
-                    // 생성 후 상태 확인
-                    Log.d(TAG, """
-                        Label Options State for ${place.name}:
-                        - ID: $labelId
-                        - Position: $position
-                        - Visible: ${labelOptions.isVisible()}
-                        - Has Styles: ${labelOptions.styles != null}
-                    """.trimIndent())
 
                     mapState.labelLayer?.addLabel(labelOptions)?.let { label ->
+                        // 라벨 크기 조절 - 10%로 축소
+                        label.scaleTo(0.1f, 0.1f)
                         label.show()
 
-                        // 라벨이 실제로 레이어에 있는지 확인
-                        val isLabelInLayer = mapState.labelLayer?.hasLabel(labelId) ?: false
-                        val currentLabelCount = mapState.labelLayer?.getLabelCount() ?: 0
-
-                        Log.d(TAG, """
-                        Marker ${place.name}:
-                        - Label ID: $labelId
-                        - Is in layer: $isLabelInLayer
-                        - Current label count: $currentLabelCount
-                    """.trimIndent())
-
+                        // 클릭 이벤트 처리를 위해 라벨과 장소 정보 매핑
                         mapState.markerMap[labelId] = place
                     }
                 } catch (e: Exception) {
-                    Log.e(TAG, "Error adding marker for place: ${place.name}", e)
+                    // 예외 처리
                 }
             }
-
-            // 최종 상태 확인
-            mapState.labelLayer?.let { layer ->
-                val finalLabelCount = layer.getLabelCount()
-                val isLayerVisible = layer.isVisible()
-                Log.d(TAG, """
-                Final Layer State:
-                - Label Count: $finalLabelCount
-                - Is Visible: $isLayerVisible
-            """.trimIndent())
-            }
         } catch (e: Exception) {
-            Log.e(TAG, "Error in marker update process", e)
+            // 예외 처리
         }
     }
 
@@ -190,9 +143,8 @@ fun KakaoMapView(
             val position = LatLng.from(selectedPlace.latitude, selectedPlace.longitude)
             val cameraUpdate = CameraUpdateFactory.newCenterPosition(position, 15)
             mapState.map?.moveCamera(cameraUpdate, CameraAnimation.from(300))
-            Log.d(TAG, "Camera moved to selected place: ${selectedPlace.name}")
         } catch (e: Exception) {
-            Log.e(TAG, "Error moving camera to selected place", e)
+            // 예외 처리
         }
     }
 }

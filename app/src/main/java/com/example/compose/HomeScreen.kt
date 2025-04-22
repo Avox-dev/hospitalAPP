@@ -49,7 +49,7 @@ fun HomeScreen(
     val dimens = appDimens()
 
     // 현재 사용자 위치 (기본값: 서울시청)
-    val currentLocation = remember { mutableStateOf("주안동") }
+    val currentLocation = remember { mutableStateOf("서울시청") }
 
     Column(modifier = Modifier.fillMaxSize()) {
         // 상단 앱바

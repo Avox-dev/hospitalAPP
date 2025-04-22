@@ -48,7 +48,7 @@ fun EnhancedSearchBar(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .height(48.dp),
+            .height(52.dp),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(containerColor = SearchBarBackground),
         elevation = CardDefaults.cardElevation(0.dp)
