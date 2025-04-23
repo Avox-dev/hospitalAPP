@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.compose.data.ApiResult
 import com.example.compose.data.UserService
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
@@ -22,36 +23,50 @@ class RegisterViewModel : ViewModel() {
     // 회원가입 처리
     fun register(email: String, userId: String, password: String, name: String, birthdate: String, phone: String, address: String) {
         viewModelScope.launch {
-            try {
-                // 로딩 상태로 변경
-                _registerState.value = RegisterState.Loading
+            _registerState.value = RegisterState.Loading
 
-                // UserService를 통한 회원가입 API 호출
-                val result = userService.register(email, userId, password, birthdate, phone, address)
+            val maxRetries = 3
+            var retryCount = 0
+            var lastException: Exception? = null
 
-                // 결과 처리
-                when (result) {
-                    is ApiResult.Success -> {
-                        // 성공 응답 처리
-                        val responseData = result.data
-                        val status = responseData.optString("status")
-                        val message = responseData.optString("message")
+            while (retryCount < maxRetries) {
+                try {
+                    // UserService를 통한 회원가입 API 호출
+                    val result = userService.register(email, userId, password, birthdate, phone, address)
 
-                        if (status == "success") {
-                            _registerState.value = RegisterState.Success(message)
-                        } else {
-                            _registerState.value = RegisterState.Error(message)
+                    // 결과 처리
+                    when (result) {
+                        is ApiResult.Success -> {
+                            // 성공 응답 처리
+                            val responseData = result.data
+                            val status = responseData.optString("status")
+                            val message = responseData.optString("message")
+
+                            if (status == "success") {
+                                _registerState.value = RegisterState.Success(message)
+                            } else {
+                                _registerState.value = RegisterState.Error(message)
+                            }
+                            return@launch
+                        }
+                        is ApiResult.Error -> {
+                            // 오류 응답 처리
+                            lastException = Exception(result.message)
+                            // 재시도를 위해 예외 처리로 넘어감
                         }
                     }
-                    is ApiResult.Error -> {
-                        // 오류 응답 처리
-                        _registerState.value = RegisterState.Error(result.message)
-                    }
+                } catch (e: Exception) {
+                    lastException = e
                 }
-            } catch (e: Exception) {
-                // 예외 발생
-                _registerState.value = RegisterState.Error("회원가입 중 오류가 발생했습니다: ${e.message}")
+
+                retryCount++
+                if (retryCount < maxRetries) {
+                    delay(1000L * retryCount)
+                }
             }
+
+            // 모든 재시도 실패 후
+            _registerState.value = RegisterState.Error("회원가입 중 오류가 발생했습니다: ${lastException?.message}")
         }
     }
 
