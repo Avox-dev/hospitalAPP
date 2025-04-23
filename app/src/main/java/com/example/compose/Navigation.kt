@@ -10,7 +10,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.example.compose.ui.screens.CommunityScreen
 import com.example.compose.ui.screens.HomeScreen
-import com.example.compose.ui.screens.MyDdocDocScreen
+import com.example.compose.ui.screens.DoctorFutureScreen
 import com.example.compose.ui.screens.MyPageScreen
 import com.example.compose.ui.screens.LoginPage
 import com.example.compose.ui.screens.RegisterPage
@@ -62,7 +62,7 @@ fun AppNavigation(
         }
 
         composable(Screen.MyDdocDoc.route) {
-            MyDdocDocScreen(
+            DoctorFutureScreen(
                 navigateToScreen = { route ->
                     navController.navigate(route)
                 }

@@ -29,7 +29,7 @@ import com.example.compose.viewmodel.HomeViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MyDdocDocScreen(
+fun DoctorFutureScreen(
     navigateToScreen: (String) -> Unit,
     viewModel: HomeViewModel = viewModel()
 ) {
@@ -242,7 +242,7 @@ fun ServiceCard(
 @Preview
 @Composable
 fun MyDdocDocScreenPreview() {
-    MyDdocDocScreen(
+    DoctorFutureScreen(
         navigateToScreen = {}
     )
 }
