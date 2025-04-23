@@ -49,13 +49,13 @@ class ReservationService {
      * @param userId 사용자 ID
      * @return 예약 내역 목록
      */
-    suspend fun getReservations(userId: String): ApiResult<JSONObject> = withContext(Dispatchers.IO) {
-        // JSON 요청 본문 생성
-        val jsonBody = JSONObject().apply {
-            put("userId", userId)
+    suspend fun getUserReservations(userId: String): ApiResult<JSONObject> = withContext(Dispatchers.IO) {
+        try {
+            // GET 요청 실행 (API 형식에 맞게 URL 구성)
+            val url = "${ApiConstants.RESERVATION_URL}/user/$userId"
+            ApiServiceCommon.getRequest(url)
+        } catch (e: Exception) {
+            ApiResult.Error(message = "예약 내역 조회 중 오류 발생: ${e.message}")
         }
-
-        // API 요청 실행
-        ApiServiceCommon.postRequest("${ApiConstants.RESERVATION_URL}/list", jsonBody)
     }
 }

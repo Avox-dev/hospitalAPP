@@ -8,28 +8,36 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.example.compose.data.UserRepository
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.compose.viewmodel.Reservation
+import com.example.compose.navigation.Screen
+import com.example.compose.viewmodel.ReservationHistoryViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ReservationHistoryScreen(
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    navigateToScreen: (String) -> Unit = {},
+    viewModel: ReservationHistoryViewModel = viewModel()
 ) {
-    // UserRepository에서 현재 로그인한 사용자 정보 가져오기
-    val userRepository = UserRepository.getInstance()
-    val currentUser by userRepository.currentUser.collectAsState()
+    LaunchedEffect(key1 = Unit) {
+        viewModel.loadReservations()
+    }
+
+    val uiState by viewModel.uiState.collectAsState()
 
     Scaffold(
         topBar = {
@@ -46,104 +54,77 @@ fun ReservationHistoryScreen(
             )
         }
     ) { paddingValues ->
-        if (currentUser == null) {
-            // 로그인되지 않은 경우
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues),
-                contentAlignment = Alignment.Center
-            ) {
-                Text(
-                    text = "로그인이 필요한 서비스입니다.",
-                    fontSize = 18.sp
-                )
-            }
-        } else {
-            // 로그인된 경우, 예약 내역 표시
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-                    .padding(16.dp)
-            ) {
-                // 임시 예약 데이터 생성
-                val reservations = remember {
-                    listOf(
-                        Reservation(
-                            id = "R001",
-                            hospitalName = "서울 어린이 병원",
-                            doctorName = "김의사",
-                            department = "소아청소년과",
-                            date = "2025년 4월 17일",
-                            time = "오전 10:30",
-                            status = "예약 확정"
-                        ),
-                        Reservation(
-                            id = "R002",
-                            hospitalName = "행복 가정의학과",
-                            doctorName = "이의사",
-                            department = "가정의학과",
-                            date = "2025년 4월 15일",
-                            time = "오후 2:00",
-                            status = "방문 완료"
-                        ),
-                        Reservation(
-                            id = "R003",
-                            hospitalName = "미소 치과 의원",
-                            doctorName = "박의사",
-                            department = "치과",
-                            date = "2025년 4월 10일",
-                            time = "오후 5:30",
-                            status = "방문 완료"
-                        )
-                    )
+        when (uiState) {
+            is ReservationHistoryViewModel.ReservationHistoryUiState.Loading -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = Color(0xFFD0BCFF))
                 }
-
-                if (reservations.isEmpty()) {
-                    // 예약 내역이 없는 경우
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(16.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally
+            }
+            is ReservationHistoryViewModel.ReservationHistoryUiState.NotLoggedIn -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text("로그인이 필요한 서비스입니다.", fontSize = 18.sp)
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(
+                            onClick = { navigateToScreen(Screen.Login.route) },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD0BCFF)),
+                            shape = RoundedCornerShape(8.dp)
                         ) {
-                            Text(
-                                text = "예약 내역이 없습니다.",
-                                fontSize = 18.sp,
-                                color = Color.Gray,
-                                textAlign = TextAlign.Center
-                            )
-
-                            Spacer(modifier = Modifier.height(16.dp))
-
-                            Button(
-                                onClick = { /* 병원 검색 화면으로 이동 */ },
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = Color(0xFFD0BCFF)
-                                ),
-                                shape = RoundedCornerShape(8.dp)
-                            ) {
-                                Text(
-                                    text = "병원 검색하기",
-                                    color = Color.Black
-                                )
-                            }
+                            Text("로그인하기", color = Color.Black)
                         }
                     }
-                } else {
-                    // 예약 내역이 있는 경우
+                }
+            }
+            is ReservationHistoryViewModel.ReservationHistoryUiState.Empty -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                        .padding(16.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(
+                            "예약 내역이 없습니다.",
+                            fontSize = 18.sp,
+                            color = Color.Gray,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(
+                            onClick = { /* 검색 기능 추가 */ },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD0BCFF)),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text("병원 검색하기", color = Color.Black)
+                        }
+                    }
+                }
+            }
+            is ReservationHistoryViewModel.ReservationHistoryUiState.Success -> {
+                val reservations = (uiState as ReservationHistoryViewModel.ReservationHistoryUiState.Success).reservations
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues)
+                        .padding(16.dp)
+                ) {
                     Text(
-                        text = "총 ${reservations.size}건의 예약이 있습니다.",
+                        "총 ${reservations.size}건의 예약이 있습니다.",
                         fontSize = 14.sp,
                         color = Color.Gray,
                         modifier = Modifier.padding(vertical = 8.dp)
                     )
-
-                    // 예약 목록
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
@@ -154,33 +135,53 @@ fun ReservationHistoryScreen(
                     }
                 }
             }
+            is ReservationHistoryViewModel.ReservationHistoryUiState.Error -> {
+                val errorMessage = (uiState as ReservationHistoryViewModel.ReservationHistoryUiState.Error).message
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center,
+                        modifier = Modifier.padding(16.dp)
+                    ) {
+                        Text(
+                            "오류가 발생했습니다",
+                            fontSize = 18.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.Red
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            errorMessage,
+                            fontSize = 14.sp,
+                            color = Color.Gray,
+                            textAlign = TextAlign.Center
+                        )
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(
+                            onClick = { viewModel.loadReservations() },
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD0BCFF)),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text("다시 시도하기", color = Color.Black)
+                        }
+                    }
+                }
+            }
         }
     }
 }
 
-// 예약 데이터 클래스
-data class Reservation(
-    val id: String,
-    val hospitalName: String,
-    val doctorName: String,
-    val department: String,
-    val date: String,
-    val time: String,
-    val status: String
-)
-
-// 예약 카드 컴포넌트
 @Composable
-fun ReservationCard(
-    reservation: Reservation
-) {
+fun ReservationCard(reservation: Reservation) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth(),
+        modifier = Modifier.fillMaxWidth(),
         elevation = CardDefaults.cardElevation(4.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = Color.White
-        ),
+        colors = CardDefaults.cardColors(containerColor = Color.White),
         shape = RoundedCornerShape(12.dp)
     ) {
         Column(
@@ -188,19 +189,16 @@ fun ReservationCard(
                 .fillMaxWidth()
                 .padding(16.dp)
         ) {
-            // 예약 상태
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = reservation.department,
-                    fontSize = 14.sp,
-                    color = Color.Gray
+                    text = reservation.hospital,
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
                 )
-
-                // 상태 표시 (예약 확정, 방문 완료 등)
                 Box(
                     modifier = Modifier
                         .background(
@@ -227,54 +225,14 @@ fun ReservationCard(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            // 병원명
-            Text(
-                text = reservation.hospitalName,
-                fontSize = 18.sp,
-                fontWeight = FontWeight.Bold,
-            )
+            ReservationInfoRow(Icons.Default.LocationOn, reservation.address)
+            ReservationInfoRow(Icons.Default.Phone, reservation.phone)
+            ReservationInfoRow(Icons.Default.Email, reservation.email)
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // 예약 정보 표시
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Default.DateRange,
-                    contentDescription = "날짜",
-                    tint = Color.Gray,
-                    modifier = Modifier.size(20.dp)
-                )
-
-                Spacer(modifier = Modifier.width(8.dp))
-
+            if (reservation.message.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "${reservation.date} ${reservation.time}",
-                    fontSize = 14.sp,
-                    color = Color.DarkGray
-                )
-            }
-
-            Spacer(modifier = Modifier.height(8.dp))
-
-            // 의사
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Person,
-                    contentDescription = "의사",
-                    tint = Color.Gray,
-                    modifier = Modifier.size(20.dp)
-                )
-
-                Spacer(modifier = Modifier.width(8.dp))
-
-                Text(
-                    text = "${reservation.doctorName} 의사",
+                    text = "메시지: ${reservation.message}",
                     fontSize = 14.sp,
                     color = Color.DarkGray
                 )
@@ -282,55 +240,62 @@ fun ReservationCard(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 버튼 영역
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                if (reservation.status == "예약 확정") {
-                    // 취소 버튼 (예약 확정 상태일 때만 표시)
-                    OutlinedButton(
-                        onClick = { /* 취소 기능 */ },
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.outlinedButtonColors(
-                            contentColor = Color.Gray
-                        )
-                    ) {
-                        Text("예약 취소")
+                when (reservation.status) {
+                    "예약 확정" -> {
+                        OutlinedButton(
+                            onClick = { /* 취소 기능 */ },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(8.dp),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Color.Gray)
+                        ) {
+                            Text("예약 취소")
+                        }
+                        Button(
+                            onClick = { /* 변경 기능 */ },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(8.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD0BCFF))
+                        ) {
+                            Text("예약 변경", color = Color.Black)
+                        }
                     }
-
-                    // 변경 버튼
-                    Button(
-                        onClick = { /* 변경 기능 */ },
-                        modifier = Modifier.weight(1f),
-                        shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFFD0BCFF)
-                        )
-                    ) {
-                        Text(
-                            text = "예약 변경",
-                            color = Color.Black
-                        )
-                    }
-                } else if (reservation.status == "방문 완료") {
-                    // 리뷰 작성 버튼 (방문 완료일 때 표시)
-                    Button(
-                        onClick = { /* 리뷰 작성 기능 */ },
-                        modifier = Modifier.fillMaxWidth(),
-                        shape = RoundedCornerShape(8.dp),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFFD0BCFF)
-                        )
-                    ) {
-                        Text(
-                            text = "리뷰 작성하기",
-                            color = Color.Black
-                        )
+                    "방문 완료" -> {
+                        Button(
+                            onClick = { /* 리뷰 작성 기능 */ },
+                            modifier = Modifier.fillMaxWidth(),
+                            shape = RoundedCornerShape(8.dp),
+                            colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD0BCFF))
+                        ) {
+                            Text("리뷰 작성하기", color = Color.Black)
+                        }
                     }
                 }
             }
         }
+    }
+}
+
+@Composable
+fun ReservationInfoRow(icon: ImageVector, text: String) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = Color.Gray,
+            modifier = Modifier.size(20.dp)
+        )
+        Spacer(modifier = Modifier.width(8.dp))
+        Text(
+            text = text,
+            fontSize = 14.sp,
+            color = Color.DarkGray
+        )
     }
 }

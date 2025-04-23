@@ -33,13 +33,6 @@ class LoginViewModel : ViewModel() {
 
             while (retryCount < maxRetries) {
                 try {
-                    val jsonBody = JSONObject().apply {
-                        put("userId", userId)
-                        put("password", password)
-                    }
-
-
-
                     val result = withContext(Dispatchers.IO) {
                         userService.login(userId, password)
                     }
@@ -47,24 +40,23 @@ class LoginViewModel : ViewModel() {
                     when (result) {
                         is ApiResult.Success -> {
                             val responseData = result.data
-
-
                             val status = responseData.optString("status")
                             val message = responseData.optString("message")
 
                             if (status == "success") {
                                 val userData = responseData.optJSONObject("data")
-                                val sessionId = responseData.optString("session", "")
+
                                 if (userData != null) {
-                                    val username = userData.optString("username")
-                                    val email = userData.optString("email")
+                                    val id = userData.optInt("id", -1).toString()
+                                    val username = userData.optString("username", "")
+                                    val email = userData.optString("email", "")
                                     val phone = userData.optString("phone", "")
                                     val birthdate = userData.optString("birthdate", "")
                                     val address = userData.optString("address", "")
 
                                     userRepository.setCurrentUser(
                                         User(
-                                            userId = username,
+                                            userId = id,
                                             userName = username,
                                             email = email,
                                             phone = phone,
@@ -72,7 +64,6 @@ class LoginViewModel : ViewModel() {
                                             address = address
                                         )
                                     )
-                                    userRepository.setSessionId(sessionId)
 
                                     _loginState.value = LoginState.Success(message)
                                 } else {
@@ -83,28 +74,25 @@ class LoginViewModel : ViewModel() {
                             }
                             return@launch
                         }
-                        is ApiResult.Error -> {
 
+                        is ApiResult.Error -> {
                             lastException = Exception(result.message)
                         }
                     }
                 } catch (e: Exception) {
-
                     lastException = e
                 }
 
                 retryCount++
                 if (retryCount < maxRetries) {
-                    val waitTime = 1000L * retryCount
-
-                    delay(waitTime)
+                    delay(1000L * retryCount)
                 }
             }
 
-            // 모든 재시도 실패 후
             _loginState.value = LoginState.Error("로그인 중 오류가 발생했습니다: ${lastException?.message ?: "알 수 없는 오류"}")
         }
     }
+
 
     sealed class LoginState {
         object Initial : LoginState()
