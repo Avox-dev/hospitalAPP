@@ -149,7 +149,9 @@ fun CommunityScreen(
                             }) { post ->
                                 PostItem(
                                     post = post,
-                                    onClick = { /* 게시글 상세 화면으로 이동 */ }
+                                    onClick = {
+                                        navigateToScreen(Screen.PostDetail.createRoute(post.id))
+                                    }
                                 )
                                 Divider(color = Color(0xFFEEEEEE), thickness = 1.dp)
                             }
@@ -164,9 +166,12 @@ fun CommunityScreen(
                             .padding(horizontal = 16.dp)
                     ) {
                         items(notices) { notice ->
-                            NoticeItem(notice = notice, onClick = {
+                            NoticeItem(
+                                notice = notice,
+                                onClick = {
                                 navigateToScreen(Screen.NoticeDetail.createRoute(notice.id))
-                            })
+                                }
+                            )
                             Divider(color = Color(0xFFEEEEEE), thickness = 1.dp)
                         }
                     }

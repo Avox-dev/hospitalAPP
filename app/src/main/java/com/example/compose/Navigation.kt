@@ -21,6 +21,7 @@ import com.example.compose.ui.screens.ChatBotScreen
 import com.example.compose.ui.screens.HospitalSearchResultScreen
 
 import com.example.compose.ui.screens.NoticeDetailScreen
+import com.example.compose.ui.screens.PostDetailScreen
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.compose.viewmodel.CommunityViewModel
 import androidx.compose.runtime.collectAsState
@@ -43,6 +44,9 @@ sealed class Screen(val route: String) {
     }
     object NoticeDetail : Screen("notice_detail/{noticeId}") {
         fun createRoute(noticeId: Int) = "notice_detail/$noticeId"
+    }
+    object PostDetail : Screen("post_detail/{postId}") {
+        fun createRoute(postId: String) = "post_detail/$postId"
     }
 }
 
@@ -201,6 +205,25 @@ fun AppNavigation(
                 )
             } else {
                 Text("공지사항을 찾을 수 없습니다.")
+            }
+        }
+        composable(
+            route = "post_detail/{postId}",
+            arguments = listOf(navArgument("postId") { type = NavType.StringType })
+        ) { backStackEntry ->
+            val postId = backStackEntry.arguments?.getString("postId") ?: ""
+            val viewModel: CommunityViewModel = viewModel()
+
+            val postList: List<CommunityViewModel.Post> by viewModel.posts.collectAsState()
+            val post = postList.find { it.id == postId }
+
+            if (post != null) {
+                PostDetailScreen(
+                    post = post,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            } else {
+                Text("게시글을 찾을 수 없습니다.")
             }
         }
 
