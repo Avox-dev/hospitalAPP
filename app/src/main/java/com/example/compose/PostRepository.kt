@@ -1,10 +1,17 @@
-// PostRepository.kt - 새로 생성
+// PostRepository.kt - API 통신을 위해 수정됨
 package com.example.compose.data
 
 import com.example.compose.viewmodel.CommunityViewModel.Post
 import com.example.compose.viewmodel.CommunityViewModel.Notice
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import org.json.JSONObject
+import java.text.SimpleDateFormat
+import java.util.*
 
 object PostRepository {
     // 게시글 목록
@@ -15,14 +22,148 @@ object PostRepository {
     private val _notices = MutableStateFlow<List<Notice>>(emptyList())
     val notices: StateFlow<List<Notice>> = _notices
 
+    private val coroutineScope = CoroutineScope(Dispatchers.IO)
+
     init {
-        // 샘플 데이터 로드
-        loadSamplePosts()
+        // API에서 게시글 데이터 로드
+        fetchPosts()
+
+        // 공지사항 샘플 데이터 로드 (변경하지 않음)
         loadSampleNotices()
     }
 
-    // 게시글 추가 메서드
+    // API에서 게시글 목록 가져오기
+    fun fetchPosts() {
+        coroutineScope.launch {
+            try {
+                val result = getPostsFromApi()
+
+                if (result is ApiResult.Success) {
+                    val jsonResponse = result.data
+                    val status = jsonResponse.optString("status")
+
+                    if (status == "success") {
+                        val dataObject = jsonResponse.optJSONObject("data")
+                        if (dataObject != null) {
+                            val itemsArray = dataObject.optJSONArray("items")
+                            if (itemsArray != null) {
+                                val postsList = mutableListOf<Post>()
+
+                                for (i in 0 until itemsArray.length()) {
+                                    val postJson = itemsArray.getJSONObject(i)
+                                    val post = parsePostFromJson(postJson)
+                                    postsList.add(post)
+                                }
+
+                                _posts.value = postsList
+                                return@launch
+                            }
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                println("API 요청 실패: ${e.message}")
+            }
+        }
+    }
+
+    // API 요청 함수 (GET) - ApiServiceCommon 활용
+    private suspend fun getPostsFromApi(page: Int = 1, perPage: Int = 20): ApiResult<JSONObject> = withContext(Dispatchers.IO) {
+        val url = "${ApiConstants.POSTS_URL}?page=$page&per_page=$perPage"
+        return@withContext ApiServiceCommon.getRequest(url)
+    }
+
+    // JSON에서 Post 객체로 파싱
+    private fun parsePostFromJson(postJson: JSONObject): Post {
+        val id = postJson.optString("id", "")
+        val title = postJson.optString("title", "")
+        val content = postJson.optString("comment", "")  // API는 comment 필드 사용
+        val author = postJson.optString("username", "익명")
+        val category = postJson.optString("category", "일반")
+        val createdAt = postJson.optString("created_at", "")
+        val likes = postJson.optInt("likes", 0)
+        val comments = postJson.optInt("comments", 0)
+
+        // 시간 변환
+        val timeAgo = calculateTimeAgo(createdAt)
+
+        return Post(
+            id = id,
+            title = title,
+            content = content,
+            author = author,
+            category = category,
+            timeAgo = timeAgo,
+            likes = likes,
+            comments = comments
+        )
+    }
+
+    // 날짜 문자열을 "n시간 전" 형식으로 변환
+    private fun calculateTimeAgo(dateStr: String): String {
+        if (dateStr.isEmpty()) return "날짜 정보 없음"
+
+        try {
+            val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
+            val past = sdf.parse(dateStr)
+            val now = Date()
+            val seconds = (now.time - past.time) / 1000
+
+            return when {
+                seconds < 60 -> "방금 전"
+                seconds < 3600 -> "${seconds / 60}분 전"
+                seconds < 86400 -> "${seconds / 3600}시간 전"
+                else -> "${seconds / 86400}일 전"
+            }
+        } catch (e: Exception) {
+            return "날짜 오류"
+        }
+    }
+
+    // 게시글 추가 메서드 - API 연동
     fun addPost(title: String, content: String, category: String) {
+        coroutineScope.launch {
+            try {
+                val result = createPostApi(title, content, category)
+
+                if (result is ApiResult.Success) {
+                    val jsonResponse = result.data
+                    val status = jsonResponse.optString("status")
+
+                    if (status == "success") {
+                        // 새 게시글 추가 후 전체 목록 다시 로드
+                        fetchPosts()
+                    } else {
+                        // API 요청은 성공했지만 서버에서 오류 반환
+                        println("게시글 추가 실패: ${jsonResponse.optString("message", "알 수 없는 오류")}")
+                        addPostLocally(title, content, category)
+                    }
+                } else if (result is ApiResult.Error) {
+                    // API 요청 자체가 실패
+                    println("게시글 추가 요청 실패: ${result.message}")
+                    addPostLocally(title, content, category)
+                }
+            } catch (e: Exception) {
+                println("게시글 추가 중 예외 발생: ${e.message}")
+                addPostLocally(title, content, category)
+            }
+        }
+    }
+
+    // 게시글 생성 API 요청 - ApiServiceCommon 활용
+    private suspend fun createPostApi(title: String, content: String, category: String): ApiResult<JSONObject> = withContext(Dispatchers.IO) {
+        val jsonBody = JSONObject().apply {
+            put("title", title)
+            put("comment", content)  // API는 comment 필드 사용
+            put("category", category)
+            put("username", "사용자")  // 필요에 따라 실제 사용자 이름으로 변경
+        }
+
+        return@withContext ApiServiceCommon.postRequest(ApiConstants.POSTS_URL, jsonBody)
+    }
+
+    // API 호출 실패 시 로컬에 게시글 추가 (임시 방편)
+    private fun addPostLocally(title: String, content: String, category: String) {
         val newId = System.currentTimeMillis().toString()
         val newPost = Post(
             id = newId,
@@ -40,64 +181,35 @@ object PostRepository {
         _posts.value = currentPosts
     }
 
-    // 샘플 데이터 로드 메서드
-    private fun loadSamplePosts() {
-        val samplePosts = listOf(
-            Post(
-                id = "1",
-                title = "아기가 자꾸 열이 나요, 어떻게 해야 할까요?",
-                content = "6개월 된 아기인데 어제부터 열이 38도까지 올라갔어요. 해열제를 먹였는데도 잘 안 내려가네요. 병원에 가볼까요?",
-                author = "워킹맘",
-                category = "질문",
-                timeAgo = "10분 전",
-                likes = 5,
-                comments = 3
-            ),
-            Post(
-                id = "2",
-                title = "임산부를 위한 영양제 추천해주세요",
-                content = "임신 12주차인데 입덧이 심해서 영양제 먹으려고 합니다. 추천 부탁드려요!",
-                author = "예비맘",
-                category = "질문",
-                timeAgo = "30분 전",
-                likes = 8,
-                comments = 12
-            ),
-            Post(
-                id = "3",
-                title = "저희 동네 소아과 추천해요",
-                content = "강남역 근처에 있는 해피키즈 소아과 정말 좋아요. 의사선생님도 친절하시고 대기시간도 짧아요.",
-                author = "아이맘",
-                category = "자유",
-                timeAgo = "1시간 전",
-                likes = 15,
-                comments = 4
-            ),
-            Post(
-                id = "4",
-                title = "아이 식욕부진 어떻게 해결하셨나요?",
-                content = "4살 아들이 요즘 밥을 잘 안 먹어요. 간식만 찾고 밥은 몇 숟가락 먹기 힘든 상황입니다. 비슷한 경험 있으신 분들 조언 부탁드려요.",
-                author = "고민맘",
-                category = "질문",
-                timeAgo = "3시간 전",
-                likes = 7,
-                comments = 9
-            ),
-            Post(
-                id = "5",
-                title = "올 여름 가족여행 계획",
-                content = "아이들과 함께 갈만한 여름 여행지 고민 중이에요. 작년에는 제주도 다녀왔는데 올해는 어디가 좋을까요?",
-                author = "여행좋아",
-                category = "자유",
-                timeAgo = "5시간 전",
-                likes = 12,
-                comments = 8
-            )
-        )
-
-        _posts.value = samplePosts
+    // 게시글 상세 조회 API 요청 - ApiServiceCommon 활용
+    private suspend fun getPostDetailFromApi(postId: String): ApiResult<JSONObject> = withContext(Dispatchers.IO) {
+        val url = "${ApiConstants.POSTS_URL}/$postId"
+        return@withContext ApiServiceCommon.getRequest(url)
     }
 
+    // 게시글 수정 API 요청 - ApiServiceCommon 활용
+    private suspend fun updatePostApi(postId: String, title: String, content: String, category: String): ApiResult<JSONObject> = withContext(Dispatchers.IO) {
+        val jsonBody = JSONObject().apply {
+            put("title", title)
+            put("comment", content)
+            put("category", category)
+        }
+
+        val url = "${ApiConstants.POSTS_URL}/$postId"
+        // PUT 요청은 아직 ApiServiceCommon에 구현되어 있지 않아 POST로 대체
+        return@withContext ApiServiceCommon.postRequest(url, jsonBody)
+    }
+
+    // 게시글 삭제 API 요청 - ApiServiceCommon 활용
+    private suspend fun deletePostApi(postId: String): ApiResult<JSONObject> = withContext(Dispatchers.IO) {
+        val url = "${ApiConstants.POSTS_URL}/$postId"
+        // DELETE 요청은 아직 ApiServiceCommon에 구현되어 있지 않아 POST로 대체
+        return@withContext ApiServiceCommon.postRequest(url, JSONObject())
+    }
+
+
+
+    // 공지사항 샘플 데이터 (변경하지 않음)
     private fun loadSampleNotices() {
         val sampleNotices = listOf(
             Notice(
