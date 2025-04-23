@@ -20,6 +20,13 @@ import com.example.compose.ui.screens.ReservationHistoryScreen
 import com.example.compose.ui.screens.ChatBotScreen
 import com.example.compose.ui.screens.HospitalSearchResultScreen
 
+import com.example.compose.ui.screens.NoticeDetailScreen
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.compose.viewmodel.CommunityViewModel
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.material3.Text
+
 sealed class Screen(val route: String) {
     object Home : Screen("home")
     object MyDdocDoc : Screen("mydocdoc")
@@ -33,6 +40,9 @@ sealed class Screen(val route: String) {
     object ChatBot : Screen("chatbot")
     object HospitalSearchResult : Screen("hospital_search_result/{query}") {
         fun createRoute(query: String) = "hospital_search_result/$query"
+    }
+    object NoticeDetail : Screen("notice_detail/{noticeId}") {
+        fun createRoute(noticeId: Int) = "notice_detail/$noticeId"
     }
 }
 
@@ -172,5 +182,27 @@ fun AppNavigation(
                 }
             )
         }
+
+        //공지사항 상세 페이지
+        composable(
+            route = "notice_detail/{noticeId}",
+            arguments = listOf(navArgument("noticeId") { type = NavType.IntType })
+        ) { backStackEntry ->
+            val noticeId = backStackEntry.arguments?.getInt("noticeId") ?: 0
+            val viewModel: CommunityViewModel = viewModel()
+
+            val noticeList: List<CommunityViewModel.Notice> by viewModel.notices.collectAsState()
+            val notice = noticeList.find { it.id == noticeId }
+
+            if (notice != null) {
+                NoticeDetailScreen(
+                    notice = notice,
+                    onNavigateBack = { navController.popBackStack() }
+                )
+            } else {
+                Text("공지사항을 찾을 수 없습니다.")
+            }
+        }
+
     }
 }

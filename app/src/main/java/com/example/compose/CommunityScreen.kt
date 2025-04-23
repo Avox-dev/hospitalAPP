@@ -164,10 +164,9 @@ fun CommunityScreen(
                             .padding(horizontal = 16.dp)
                     ) {
                         items(notices) { notice ->
-                            NoticeItem(
-                                notice = notice,
-                                onClick = { /* 공지사항 상세 화면으로 이동 */ }
-                            )
+                            NoticeItem(notice = notice, onClick = {
+                                navigateToScreen(Screen.NoticeDetail.createRoute(notice.id))
+                            })
                             Divider(color = Color(0xFFEEEEEE), thickness = 1.dp)
                         }
                     }
