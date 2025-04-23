@@ -18,6 +18,10 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.compose.viewmodel.CommunityViewModel
 
+// (생략된 import는 동일)
+
+import com.example.compose.data.UserRepository // ← 로그인 상태 확인을 위해 추가
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WritePostScreen(
@@ -25,6 +29,42 @@ fun WritePostScreen(
     onPostSuccess: () -> Unit,
     viewModel: CommunityViewModel = viewModel()
 ) {
+    val userRepository = UserRepository.getInstance()
+    val currentUser by userRepository.currentUser.collectAsState()
+
+    if (currentUser == null) {
+        // ✅ 로그인되지 않은 경우
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text("글쓰기", fontWeight = FontWeight.Bold) },
+                    navigationIcon = {
+                        IconButton(onClick = onNavigateBack) {
+                            Icon(
+                                imageVector = Icons.Default.ArrowBack,
+                                contentDescription = "뒤로가기"
+                            )
+                        }
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = Color.White
+                    )
+                )
+            }
+        ) { paddingValues ->
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(paddingValues),
+                contentAlignment = Alignment.Center
+            ) {
+                Text("로그인이 필요한 서비스입니다.")
+            }
+        }
+        return
+    }
+
+    // ✅ 로그인된 경우
     var title by remember { mutableStateOf("") }
     var content by remember { mutableStateOf("") }
     var expanded by remember { mutableStateOf(false) }
@@ -44,10 +84,8 @@ fun WritePostScreen(
                     }
                 },
                 actions = {
-                    // 등록 버튼
                     TextButton(
                         onClick = {
-                            // 게시글 등록 로직
                             viewModel.addPost(title, content, selectedCategory)
                             onPostSuccess()
                         },
@@ -117,7 +155,6 @@ fun WritePostScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 제목 입력
             OutlinedTextField(
                 value = title,
                 onValueChange = { title = it },
@@ -132,7 +169,6 @@ fun WritePostScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 내용 입력
             OutlinedTextField(
                 value = content,
                 onValueChange = { content = it },
