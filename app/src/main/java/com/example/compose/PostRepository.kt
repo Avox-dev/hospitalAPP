@@ -12,6 +12,7 @@ import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.*
+import android.util.Log
 
 object PostRepository {
     // 게시글 목록
@@ -96,26 +97,30 @@ object PostRepository {
         )
     }
 
-    // 날짜 문자열을 "n시간 전" 형식으로 변환
-    private fun calculateTimeAgo(dateStr: String): String {
-        if (dateStr.isEmpty()) return "날짜 정보 없음"
+    fun calculateTimeAgo(createdAt: String): String {
+        return try {
+            val formatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
+            val createdDate = formatter.parse(createdAt)
+            if (createdDate != null) {
+                val currentTime = Date().time
+                val timeDiff = currentTime - createdDate.time
+                val minutes = timeDiff / (1000 * 60)
 
-        try {
-            val sdf = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss", Locale.getDefault())
-            val past = sdf.parse(dateStr)
-            val now = Date()
-            val seconds = (now.time - past.time) / 1000
-
-            return when {
-                seconds < 60 -> "방금 전"
-                seconds < 3600 -> "${seconds / 60}분 전"
-                seconds < 86400 -> "${seconds / 3600}시간 전"
-                else -> "${seconds / 86400}일 전"
+                when {
+                    minutes < 1 -> "방금 전"
+                    minutes < 60 -> "${minutes}분 전"
+                    minutes < 60 * 24 -> "${minutes / 60}시간 전"
+                    else -> "${minutes / 60 / 24}일 전"
+                }
+            } else {
+                "날짜 오류"
             }
         } catch (e: Exception) {
-            return "날짜 오류"
+            Log.e("DateParseError", "날짜 파싱 실패: $createdAt", e)
+            "날짜 오류"
         }
     }
+
 
     // 게시글 추가 메서드 - API 연동
     fun addPost(title: String, content: String, category: String) {
