@@ -121,13 +121,13 @@ class ChatBotViewModel : ViewModel() {
                         }
                     }
                     is ApiResult.Error -> {
-                        Log.e("ChatAPI", "API 오류(시도 ${retryCount + 1}/${maxRetries}): ${result.message}")
+
                         lastException = Exception(result.message)
                         // 재시도 로직으로 넘어감
                     }
                 }
             } catch (e: Exception) {
-                Log.e("ChatAPI", "예외 발생(시도 ${retryCount + 1}/${maxRetries}): ${e.message}", e)
+
                 lastException = e
                 // 재시도 로직으로 넘어감
             }
@@ -136,7 +136,7 @@ class ChatBotViewModel : ViewModel() {
             retryCount++
             if (retryCount < maxRetries) {
                 val waitTime = 1000L * retryCount  // 점점 더 오래 기다림
-                Log.d("ChatAPI", "재시도 대기 중... ${waitTime}ms")
+
                 delay(waitTime)
             }
         }
