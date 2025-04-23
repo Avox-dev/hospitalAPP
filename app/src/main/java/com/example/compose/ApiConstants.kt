@@ -15,7 +15,7 @@ object ApiConstants {
     const val HOSPITAL_SEARCH_URL = "$BASE_URL/hospitals/search"
 
     // 예약 관련 API
-    const val RESERVATION_URL = "$BASE_URL/reserve"
+    const val RESERVATION_URL = "$BASE_URL/reservations"
 
     // 커뮤니티 관련 API
     const val POSTS_URL = "$BASE_URL/posts"
