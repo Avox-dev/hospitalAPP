@@ -42,7 +42,6 @@ fun MyPageScreen(
     navigateToScreen: (String) -> Unit,
     viewModel: HomeViewModel = viewModel()
 ) {
-    val apiResult by viewModel.apiResult.collectAsState()
 
     // UserRepository의 로그인 상태 감시
     val userRepository = UserRepository.getInstance()

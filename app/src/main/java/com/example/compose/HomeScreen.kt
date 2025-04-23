@@ -46,7 +46,7 @@ fun HomeScreen(
     viewModel: HomeViewModel = viewModel()
 ) {
 
-    val apiResult by viewModel.apiResult.collectAsState()
+
     val dimens = appDimens()
 
     // 현재 사용자 위치 (기본값: 서울시청)
