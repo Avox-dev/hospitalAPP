@@ -323,32 +323,7 @@ fun NoticeItem(
             .clickable(onClick = onClick)
             .padding(vertical = 12.dp)
     ) {
-        // 중요 표시 및 시간
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            if (notice.isImportant) {
-                Box(
-                    modifier = Modifier
-                        .clip(RoundedCornerShape(12.dp))
-                        .background(Color(0xFFFFEBEE))
-                        .padding(horizontal = 8.dp, vertical = 4.dp)
-                ) {
-                    Text(
-                        text = "중요",
-                        fontSize = 12.sp,
-                        color = Color(0xFFE57373)
-                    )
-                }
-            }
 
-            Text(
-                text = notice.date,
-                fontSize = 12.sp,
-                color = Color.Gray
-            )
-        }
 
         Spacer(modifier = Modifier.height(8.dp))
 
@@ -365,7 +340,7 @@ fun NoticeItem(
 
         // 내용 미리보기
         Text(
-            text = notice.content,
+            text = notice.comment,
             fontSize = 14.sp,
             color = Color.DarkGray,
             maxLines = 2,

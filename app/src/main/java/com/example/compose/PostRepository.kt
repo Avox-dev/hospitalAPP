@@ -25,11 +25,8 @@ object PostRepository {
     private val coroutineScope = CoroutineScope(Dispatchers.IO)
 
     init {
-        // API에서 게시글 데이터 로드
-        fetchPosts()
 
-        // 공지사항 샘플 데이터 로드 (변경하지 않음)
-        loadSampleNotices()
+        fetchPosts()
     }
 
     // API에서 게시글 목록 가져오기
@@ -208,47 +205,4 @@ object PostRepository {
     }
 
 
-
-    // 공지사항 샘플 데이터 (변경하지 않음)
-    private fun loadSampleNotices() {
-        val sampleNotices = listOf(
-            Notice(
-                id = "1",
-                title = "어플리케이션 업데이트 안내",
-                content = "안녕하세요. 병원 애플리케이션이 새롭게 업데이트 되었습니다. 자세한 내용은 본문을 확인해주세요.",
-                date = "2025.04.15",
-                isImportant = true
-            ),
-            Notice(
-                id = "2",
-                title = "개인정보 처리방침 개정 안내",
-                content = "안녕하세요. 당사의 개인정보 처리방침이 2025년 4월 1일부로 개정되었음을 알려드립니다.",
-                date = "2025.04.01",
-                isImportant = true
-            ),
-            Notice(
-                id = "3",
-                title = "2025년 봄철 예방접종 안내",
-                content = "봄철을 맞아 어린이 예방접종 일정을 안내해드립니다. 병원 내 감염 예방을 위해 사전 예약 후 방문해주시기 바랍니다.",
-                date = "2025.03.20",
-                isImportant = false
-            ),
-            Notice(
-                id = "4",
-                title = "어린이 건강검진 무료 이벤트",
-                content = "5월 가정의 달을 맞아 어린이 건강검진 무료 이벤트를 실시합니다. 자세한 내용은 본문을 참고해주세요.",
-                date = "2025.03.15",
-                isImportant = false
-            ),
-            Notice(
-                id = "5",
-                title = "코로나19 예방 수칙 안내",
-                content = "최근 코로나19 변이 바이러스 관련 주의사항 및 예방 수칙을 안내해드립니다.",
-                date = "2025.03.10",
-                isImportant = false
-            )
-        )
-
-        _notices.value = sampleNotices
     }
-}
