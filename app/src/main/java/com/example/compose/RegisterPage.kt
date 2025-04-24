@@ -13,7 +13,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
@@ -34,7 +33,7 @@ fun RegisterPage(
     var userId by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
-    var name by remember { mutableStateOf("") }
+    var detail_address by remember { mutableStateOf("") }
     var birthdate by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
     var address by remember { mutableStateOf("") }
@@ -165,19 +164,7 @@ fun RegisterPage(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // 이름 입력 필드
-            OutlinedTextField(
-                value = name,
-                onValueChange = { name = it },
-                label = { Text("이름") },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                shape = RoundedCornerShape(8.dp),
-                singleLine = true
-            )
 
-            Spacer(modifier = Modifier.height(16.dp))
 
             // 전화번호 입력 필드
             OutlinedTextField(
@@ -223,6 +210,21 @@ fun RegisterPage(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+
+            // 상세주소 입력 필드
+            OutlinedTextField(
+                value = detail_address,
+                onValueChange = { detail_address = it },
+                label = { Text("상세주소 (예: 101동 101호") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                shape = RoundedCornerShape(8.dp),
+                singleLine = true
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
             // 이용약관 동의
             Row(
                 modifier = Modifier
@@ -251,9 +253,9 @@ fun RegisterPage(
             Button(
                 onClick = {
                     // 입력 검증
-                    if (isInputValid(email, userId, password, confirmPassword, name, birthdate, phone, address, agreeTerms)) {
+                    if (isInputValid(email, userId, password, confirmPassword, detail_address, birthdate, phone, address, agreeTerms)) {
                         // 회원가입 처리 - API 호출
-                        viewModel.register(email, userId, password, name, birthdate, phone, address)
+                        viewModel.register(email, userId, password, detail_address, birthdate, phone, address)
                     }
                 },
                 modifier = Modifier
@@ -266,7 +268,7 @@ fun RegisterPage(
                 shape = RoundedCornerShape(8.dp),
                 // 로딩 상태일 때 버튼 비활성화
                 enabled = registerState != RegisterViewModel.RegisterState.Loading &&
-                        isInputValid(email, userId, password, confirmPassword, name, birthdate, phone, address, agreeTerms)
+                        isInputValid(email, userId, password, confirmPassword, detail_address, birthdate, phone, address, agreeTerms)
             ) {
                 if (registerState == RegisterViewModel.RegisterState.Loading) {
                     // 로딩 중일 때 CircularProgressIndicator 표시

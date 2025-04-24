@@ -28,7 +28,8 @@ class UserService {
         password: String,
         birthdate: String,
         phone: String,
-        address: String
+        address: String,
+        detail_address: String
     ): ApiResult<JSONObject> = withContext(Dispatchers.IO) {
         // JSON 요청 본문 생성
         val jsonBody = JSONObject().apply {
@@ -38,6 +39,7 @@ class UserService {
             put("birthdate", birthdate)
             put("phone", phone)
             put("address", address)
+            put("detail_address", detail_address)
         }
 
         // API 요청 실행
