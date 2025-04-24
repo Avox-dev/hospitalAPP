@@ -1,4 +1,3 @@
-// ReservationService.kt
 package com.example.compose.data
 
 import kotlinx.coroutines.Dispatchers
@@ -12,6 +11,7 @@ class ReservationService {
 
     /**
      * 병원 예약 API 요청
+     * @param userId 사용자 ID
      * @param name 예약자 이름
      * @param phone 연락처
      * @param hospital 병원명
@@ -21,6 +21,7 @@ class ReservationService {
      * @return 예약 처리 결과
      */
     suspend fun makeReservation(
+        userId: String,
         name: String,
         phone: String,
         hospital: String,
@@ -30,6 +31,7 @@ class ReservationService {
     ): ApiResult<JSONObject> = withContext(Dispatchers.IO) {
         // JSON 요청 본문 생성
         val jsonBody = JSONObject().apply {
+            put("user_id", userId)  // user_id 컬럼에 userId 추가
             put("name", name)
             put("phone", phone)
             put("hospital", hospital)

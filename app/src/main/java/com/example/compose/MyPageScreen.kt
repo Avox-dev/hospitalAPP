@@ -114,7 +114,7 @@ fun MyPageTopBar(
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
-                        text = currentUser.userId.first().toString().uppercase(),
+                        text = currentUser.userName.first().toString().uppercase(),
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold,
                         color = Color.Black
@@ -125,7 +125,7 @@ fun MyPageTopBar(
 
                 // 사용자 ID
                 Text(
-                    text = currentUser.userId,
+                    text = currentUser.userName,
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Medium,
                     color = Color.Black
@@ -281,7 +281,7 @@ fun MenuListSection(
                         .padding(16.dp)
                 ) {
                     Text(
-                        text = "${currentUser.userId}님, 환영합니다",
+                        text = "${currentUser.userName}님, 환영합니다",
                         fontSize = 18.sp,
                         fontWeight = FontWeight.Bold
                     )

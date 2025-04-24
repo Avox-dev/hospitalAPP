@@ -1,4 +1,3 @@
-// ReservationViewModel.kt
 package com.example.compose.viewmodel
 
 import androidx.lifecycle.ViewModel
@@ -44,11 +43,13 @@ class ReservationViewModel : ViewModel() {
                 _reservationState.value = ReservationState.Loading
 
                 // 예약자 정보 설정 (현재 로그인된 사용자 정보 사용)
+                val userId = currentUser.userId  // userId 가져오기
                 val name = currentUser.userName
-                val phone = "010-0000-0000" // 실제 구현에서는 사용자 정보에서 가져오거나 입력받아야 함
+                val phone = currentUser.phone    // 사용자 실제 전화번호 사용
 
                 // ReservationService를 통한 예약 API 호출
                 val result = reservationService.makeReservation(
+                    userId = userId,  // userId 추가
                     name = name,
                     phone = phone,
                     hospital = hospital,
