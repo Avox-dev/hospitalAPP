@@ -24,7 +24,8 @@ import com.example.compose.data.User
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileManagementScreen(
-    onNavigateBack: () -> Unit
+    onNavigateBack: () -> Unit,
+    onNavigateChangePassword: () -> Unit
 ) {
     // UserRepository에서 현재 로그인한 사용자 정보 가져오기
     val userRepository = UserRepository.getInstance()
@@ -229,7 +230,7 @@ fun ProfileManagementScreen(
 
                 // 비밀번호 변경 버튼
                 OutlinedButton(
-                    onClick = { /* 비밀번호 변경 화면으로 이동 */ },
+                    onClick = onNavigateChangePassword,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),

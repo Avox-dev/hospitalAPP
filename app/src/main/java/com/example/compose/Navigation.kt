@@ -27,6 +27,7 @@ import com.example.compose.viewmodel.CommunityViewModel
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.material3.Text
+import com.example.compose.ui.screens.ChangePasswordScreen
 
 sealed class Screen(val route: String) {
     object Home : Screen("home")
@@ -48,6 +49,7 @@ sealed class Screen(val route: String) {
     object PostDetail : Screen("post_detail/{postId}") {
         fun createRoute(postId: String) = "post_detail/$postId"
     }
+    object ChangePassword : Screen("change_password")
 }
 
 @Composable
@@ -142,9 +144,15 @@ fun AppNavigation(
         // 내 정보 관리 화면
         composable(Screen.ProfileManagement.route) {
             ProfileManagementScreen(
-                onNavigateBack = {
-                    navController.popBackStack()
-                }
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateChangePassword = { navController.navigate(Screen.ChangePassword.route) }
+            )
+        }
+        // 비밀번호 변경 화면
+        composable(Screen.ChangePassword.route) {
+            ChangePasswordScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onPasswordChanged = { navController.popBackStack() }
             )
         }
 
