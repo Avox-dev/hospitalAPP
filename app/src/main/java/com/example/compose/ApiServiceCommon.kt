@@ -8,6 +8,7 @@ import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import java.util.concurrent.TimeUnit
 import com.example.compose.data.UserRepository
+import okhttp3.ConnectionPool
 
 sealed class ApiResult<out T> {
     data class Success<T>(val data: T) : ApiResult<T>()
@@ -20,6 +21,16 @@ object ApiServiceCommon {
         .connectTimeout(ApiConstants.CONNECTION_TIMEOUT, TimeUnit.SECONDS)
         .readTimeout(ApiConstants.READ_TIMEOUT, TimeUnit.SECONDS)
         .writeTimeout(ApiConstants.WRITE_TIMEOUT, TimeUnit.SECONDS)
+        .retryOnConnectionFailure(true) // 연결 실패 시 자동 재시도
+        .connectionPool(ConnectionPool(5, 1, TimeUnit.MINUTES)) // 연결 풀 관리
+        .addInterceptor { chain ->
+            // 요청마다 타임아웃 설정 (필요시)
+            val request = chain.request()
+            chain.withConnectTimeout(30, TimeUnit.SECONDS)
+                .withReadTimeout(30, TimeUnit.SECONDS)
+                .withWriteTimeout(30, TimeUnit.SECONDS)
+                .proceed(request)
+        }
         .build()
 
     suspend fun postRequest(url: String, jsonBody: JSONObject): ApiResult<JSONObject> {

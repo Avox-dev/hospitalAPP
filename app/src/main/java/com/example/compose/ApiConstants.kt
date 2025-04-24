@@ -6,7 +6,7 @@ object ApiConstants {
     const val BASE_URL = "http://192.168.219.189:5002/api"
 
     // 회원 관련 API
-    const val REGISTER_URL = "$BASE_URL/register"
+    const val REGISTER_URL = "$BASE_URL/users/register"
     const val LOGIN_URL = "$BASE_URL/users/login"
     const val LOGOUT_URL = "$BASE_URL/logout"
     const val USER_UPDATE_URL = "$BASE_URL/users/update"
@@ -17,10 +17,10 @@ object ApiConstants {
     // 예약 관련 API
     const val RESERVATION_URL = "$BASE_URL/reservations"
     //예약 조회 API
-    const val RESERVATION_SEARCH_URL = "$BASE_URL/user-reservations"
+    const val RESERVATION_SEARCH_URL = "$BASE_URL/reservations/user"
 
     // 커뮤니티 관련 API
-    const val POSTS_URL = "$BASE_URL/posts"
+    const val POSTS_URL = "$BASE_URL/qna"
     const val NOTICES_URL = "$BASE_URL/notices"
 
     // 챗봇 API URL
