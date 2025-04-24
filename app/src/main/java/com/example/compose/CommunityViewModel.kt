@@ -14,6 +14,7 @@ import com.example.compose.data.ApiResult
 import com.example.compose.data.ApiServiceCommon
 import com.example.compose.data.ApiConstants.NOTICES_URL
 import com.example.compose.data.PostRepository
+import com.example.compose.data.PostRepository.fetchPosts
 
 class CommunityViewModel : ViewModel() {
 
@@ -26,6 +27,7 @@ class CommunityViewModel : ViewModel() {
 
     init {
         fetchNotices()
+        fetchPosts()
     }
 
     private fun fetchNotices() {
