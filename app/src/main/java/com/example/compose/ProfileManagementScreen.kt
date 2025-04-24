@@ -33,10 +33,10 @@ fun ProfileManagementScreen(
     // 폼 상태 관리
     var userId by remember { mutableStateOf(currentUser?.userName ?: "") }
     var userName by remember { mutableStateOf(currentUser?.userName ?: "사용자") }
-    var email by remember { mutableStateOf("") }
-    var phone by remember { mutableStateOf("") }
-    var address by remember { mutableStateOf("") }
-    var address_detail by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf(currentUser?.email ?: "") }
+    var phone by remember { mutableStateOf(currentUser?.phone ?: "") }
+    var address by remember { mutableStateOf(currentUser?.address ?: "") }
+    var address_detail by remember { mutableStateOf(currentUser?.address_detail ?: "") }
 
     // 수정 완료 후 상태 관리
     var isEditSuccess by remember { mutableStateOf(false) }

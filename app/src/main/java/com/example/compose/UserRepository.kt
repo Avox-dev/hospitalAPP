@@ -82,5 +82,6 @@ data class User(
     val phone: String = "",        // 추가
     val birthdate: String = "",    // 추가
     val address: String = "",      // 추가
-    val sessionId: String = ""     // 추가(세션 아이디)
+    val sessionId: String = "",    // 추가(세션 아이디)
+    val address_detail: String = ""// 추가(상세주소)
 )

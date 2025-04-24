@@ -57,7 +57,7 @@ class LoginViewModel : ViewModel() {
                                     val phone = userData.optString("phone", "")
                                     val birthdate = userData.optString("birthdate", "")
                                     val address = userData.optString("address", "")
-
+                                    val address_detail = userData.optString("address_detail", "")
                                     userRepository.setCurrentUser(
                                         User(
                                             userId = id,
@@ -66,7 +66,8 @@ class LoginViewModel : ViewModel() {
                                             phone = phone,
                                             birthdate = birthdate,
                                             address = address,
-                                            sessionId = sessionId
+                                            sessionId = sessionId,
+                                            address_detail = address_detail
                                         )
                                     )
 
