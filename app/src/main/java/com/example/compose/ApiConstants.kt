@@ -7,7 +7,7 @@ object ApiConstants {
 
     // 회원 관련 API
     const val REGISTER_URL = "$BASE_URL/register"
-    const val LOGIN_URL = "$BASE_URL/login"
+    const val LOGIN_URL = "$BASE_URL/users/login"
     const val LOGOUT_URL = "$BASE_URL/logout"
     const val USER_UPDATE_URL = "$BASE_URL/users/update"
 
