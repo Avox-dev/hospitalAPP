@@ -7,6 +7,7 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 import org.json.JSONObject
 import java.util.concurrent.TimeUnit
+import com.example.compose.data.UserRepository
 
 sealed class ApiResult<out T> {
     data class Success<T>(val data: T) : ApiResult<T>()
@@ -23,6 +24,12 @@ object ApiServiceCommon {
 
     suspend fun postRequest(url: String, jsonBody: JSONObject): ApiResult<JSONObject> {
         return try {
+            val sessionId = UserRepository.getInstance().getSessionId()
+            Log.d("ApiServiceCommon", "세션 아이디 값 확인: $sessionId")
+            //세션 아이디 추가
+            jsonBody.put("session", UserRepository.getInstance().getSessionId())
+
+
             Log.d("ApiServiceCommon", "POST 요청 URL: $url")
             Log.d("ApiServiceCommon", "POST 요청 Body: $jsonBody")
 
