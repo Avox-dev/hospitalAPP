@@ -33,7 +33,7 @@ fun RegisterPage(
     var userId by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
-    var detail_address by remember { mutableStateOf("") }
+    var address_detail by remember { mutableStateOf("") }
     var birthdate by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
     var address by remember { mutableStateOf("") }
@@ -213,8 +213,8 @@ fun RegisterPage(
 
             // 상세주소 입력 필드
             OutlinedTextField(
-                value = detail_address,
-                onValueChange = { detail_address = it },
+                value = address_detail,
+                onValueChange = { address_detail = it },
                 label = { Text("상세주소 (예: 101동 101호") },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -253,9 +253,9 @@ fun RegisterPage(
             Button(
                 onClick = {
                     // 입력 검증
-                    if (isInputValid(email, userId, password, confirmPassword, detail_address, birthdate, phone, address, agreeTerms)) {
+                    if (isInputValid(email, userId, password, confirmPassword, address_detail, birthdate, phone, address, agreeTerms)) {
                         // 회원가입 처리 - API 호출
-                        viewModel.register(email, userId, password, detail_address, birthdate, phone, address)
+                        viewModel.register(email, userId, password, address_detail, birthdate, phone, address)
                     }
                 },
                 modifier = Modifier
@@ -268,7 +268,7 @@ fun RegisterPage(
                 shape = RoundedCornerShape(8.dp),
                 // 로딩 상태일 때 버튼 비활성화
                 enabled = registerState != RegisterViewModel.RegisterState.Loading &&
-                        isInputValid(email, userId, password, confirmPassword, detail_address, birthdate, phone, address, agreeTerms)
+                        isInputValid(email, userId, password, confirmPassword, address_detail, birthdate, phone, address, agreeTerms)
             ) {
                 if (registerState == RegisterViewModel.RegisterState.Loading) {
                     // 로딩 중일 때 CircularProgressIndicator 표시
@@ -296,7 +296,7 @@ private fun isInputValid(
     userId: String,
     password: String,
     confirmPassword: String,
-    name: String,
+    address_detail: String,
     birthdate: String,
     phone: String,
     address: String,
@@ -307,7 +307,7 @@ private fun isInputValid(
     val isUserIdValid = userId.isNotEmpty() && userId.length >= 4
     val isPasswordValid = password.isNotEmpty() && password.length >= 6
     val isPasswordMatch = password == confirmPassword
-    val isNameValid = name.isNotEmpty()
+    val isNameValid = address_detail.isNotEmpty()
     val isBirthdateValid = birthdate.isEmpty() || isValidDateFormat(birthdate) // 생년월일은 선택적이지만 입력 시 형식 검증
     val isPhoneValid = phone.isNotEmpty() && phone.length >= 10
     val isAddressValid = address.isEmpty() || address.length >= 5 // 주소는 선택적이지만 입력 시 최소 길이 검증

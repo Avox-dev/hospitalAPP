@@ -48,4 +48,4 @@ jobs:
             빌드 시간: ${{ github.event.repository.updated_at }}
             커밋: ${{ github.sha }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN }}

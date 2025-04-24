@@ -19,13 +19,13 @@ class RegisterViewModel : ViewModel() {
     val registerState: StateFlow<RegisterState> = _registerState
 
     // 회원가입 처리
-    fun register(email: String, userId: String, password: String, detail_address: String, birthdate: String, phone: String, address: String) {
+    fun register(email: String, userId: String, password: String, address_detail: String, birthdate: String, phone: String, address: String) {
         viewModelScope.launch {
             _registerState.value = RegisterState.Loading
 
             try {
                 // UserService를 통한 회원가입 API 호출
-                val result = userService.register(email, userId, password, birthdate, phone, address, detail_address)
+                val result = userService.register(email, userId, password, birthdate, phone, address, address_detail)
 
                 // 결과 처리
                 when (result) {
