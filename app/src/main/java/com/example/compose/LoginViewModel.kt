@@ -1,6 +1,7 @@
 // LoginViewModel.kt
 package com.example.compose.viewmodel
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -14,6 +15,7 @@ import com.example.compose.data.User
 import com.example.compose.data.UserRepository
 import com.example.compose.data.ApiResult
 import com.example.compose.data.UserService
+import android.content.SharedPreferences
 import org.json.JSONObject
 
 class LoginViewModel : ViewModel() {
@@ -43,7 +45,9 @@ class LoginViewModel : ViewModel() {
                             val status = responseData.optString("status")
                             val message = responseData.optString("message")
 
-                            if (status == "success") {
+                            val sessionId = responseData.optString("session", null)
+
+                            if (status == "success" && sessionId != null) {
                                 val userData = responseData.optJSONObject("data")
 
                                 if (userData != null) {
@@ -61,7 +65,8 @@ class LoginViewModel : ViewModel() {
                                             email = email,
                                             phone = phone,
                                             birthdate = birthdate,
-                                            address = address
+                                            address = address,
+                                            sessionId = sessionId
                                         )
                                     )
 
@@ -69,8 +74,10 @@ class LoginViewModel : ViewModel() {
                                 } else {
                                     _loginState.value = LoginState.Error("사용자 정보를 불러오는데 실패했습니다.")
                                 }
-                            } else {
+                            } else if (sessionId != null) {
                                 _loginState.value = LoginState.Error(message)
+                            } else {
+                                _loginState.value = LoginState.Error("세션 정보를 불러오는데 실패했습니다")
                             }
                             return@launch
                         }
