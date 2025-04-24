@@ -31,7 +31,7 @@ fun ProfileManagementScreen(
     val currentUser by userRepository.currentUser.collectAsState()
 
     // 폼 상태 관리
-    var userId by remember { mutableStateOf(currentUser?.userId ?: "") }
+    var userId by remember { mutableStateOf(currentUser?.userName ?: "") }
     var userName by remember { mutableStateOf(currentUser?.userName ?: "사용자") }
     var email by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
@@ -104,7 +104,7 @@ fun ProfileManagementScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = currentUser?.userId?.first().toString().uppercase(),
+                                text = currentUser?.userName?.first().toString().uppercase(),
                                 fontSize = 32.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = Color(0xFF6650a4)
@@ -114,7 +114,7 @@ fun ProfileManagementScreen(
                         Spacer(modifier = Modifier.height(8.dp))
 
                         Text(
-                            text = currentUser?.userId ?: "",
+                            text = currentUser?.userName ?: "",
                             fontSize = 20.sp,
                             fontWeight = FontWeight.Bold
                         )
