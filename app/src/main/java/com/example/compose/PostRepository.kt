@@ -13,6 +13,7 @@ import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.*
 import android.util.Log
+import com.example.compose.data.User
 
 object PostRepository {
     // 게시글 목록
@@ -153,25 +154,38 @@ object PostRepository {
     }
 
     // 게시글 생성 API 요청 - ApiServiceCommon 활용
+    // PostRepository.kt의 createPostApi 메서드 수정
     private suspend fun createPostApi(title: String, content: String, category: String): ApiResult<JSONObject> = withContext(Dispatchers.IO) {
+        // UserRepository에서 현재 로그인한 사용자 정보 가져오기
+        val userRepository = UserRepository.getInstance()
+        val currentUser = userRepository.currentUser.value
+
+        val username = currentUser?.userName ?: "익명" // 로그인되지 않은 경우 "익명"으로 표시
+
         val jsonBody = JSONObject().apply {
             put("title", title)
             put("comment", content)  // API는 comment 필드 사용
             put("category", category)
-            put("username", "사용자")  // 필요에 따라 실제 사용자 이름으로 변경
+            put("username", username)  // 실제 현재 로그인한 사용자 이름 사용
         }
 
         return@withContext ApiServiceCommon.postRequest(ApiConstants.POSTS_URL, jsonBody)
     }
 
     // API 호출 실패 시 로컬에 게시글 추가 (임시 방편)
+    // addPostLocally 메서드 수정
     private fun addPostLocally(title: String, content: String, category: String) {
+        val userRepository = UserRepository.getInstance()
+        val currentUser = userRepository.currentUser.value
+
+        val username = currentUser?.userName ?: "익명" // 로그인되지 않은 경우 "익명"으로 표시
+
         val newId = System.currentTimeMillis().toString()
         val newPost = Post(
             id = newId,
             title = title,
             content = content,
-            author = "사용자",
+            author = username,  // 실제 사용자 이름 사용
             category = category,
             timeAgo = "방금 전",
             likes = 0,

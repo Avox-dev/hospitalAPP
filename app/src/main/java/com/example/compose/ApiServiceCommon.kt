@@ -9,6 +9,7 @@ import org.json.JSONObject
 import java.util.concurrent.TimeUnit
 import com.example.compose.data.UserRepository
 import okhttp3.ConnectionPool
+import okhttp3.Protocol
 
 sealed class ApiResult<out T> {
     data class Success<T>(val data: T) : ApiResult<T>()
@@ -18,19 +19,27 @@ sealed class ApiResult<out T> {
 object ApiServiceCommon {
 
     private val client = OkHttpClient.Builder()
-        .connectTimeout(ApiConstants.CONNECTION_TIMEOUT, TimeUnit.SECONDS)
-        .readTimeout(ApiConstants.READ_TIMEOUT, TimeUnit.SECONDS)
-        .writeTimeout(ApiConstants.WRITE_TIMEOUT, TimeUnit.SECONDS)
-        .retryOnConnectionFailure(true) // 연결 실패 시 자동 재시도
-        .connectionPool(ConnectionPool(5, 1, TimeUnit.MINUTES)) // 연결 풀 관리
+        .connectTimeout(60, TimeUnit.SECONDS) // 타임아웃 시간 늘림
+        .readTimeout(60, TimeUnit.SECONDS)
+        .writeTimeout(60, TimeUnit.SECONDS)
+        .retryOnConnectionFailure(true)
+        .connectionPool(ConnectionPool(5, 1, TimeUnit.MINUTES))
         .addInterceptor { chain ->
-            // 요청마다 타임아웃 설정 (필요시)
-            val request = chain.request()
-            chain.withConnectTimeout(30, TimeUnit.SECONDS)
-                .withReadTimeout(30, TimeUnit.SECONDS)
-                .withWriteTimeout(30, TimeUnit.SECONDS)
-                .proceed(request)
+            val originalRequest = chain.request()
+
+            // Keep-Alive 헤더 추가
+            val requestWithHeaders = originalRequest.newBuilder()
+                .header("Connection", "keep-alive")
+                .header("Keep-Alive", "timeout=60, max=1000")
+                .build()
+
+            // 타임아웃 설정
+            chain.withConnectTimeout(60, TimeUnit.SECONDS)
+                .withReadTimeout(60, TimeUnit.SECONDS)
+                .withWriteTimeout(60, TimeUnit.SECONDS)
+                .proceed(requestWithHeaders)
         }
+        .protocols(listOf(Protocol.HTTP_1_1)) // HTTP/2 문제 회피를 위해 HTTP/1.1만 사용
         .build()
 
     suspend fun postRequest(url: String, jsonBody: JSONObject): ApiResult<JSONObject> {
