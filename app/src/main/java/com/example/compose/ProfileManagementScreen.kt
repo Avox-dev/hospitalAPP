@@ -35,6 +35,8 @@ fun ProfileManagementScreen(
     var userName by remember { mutableStateOf(currentUser?.userName ?: "사용자") }
     var email by remember { mutableStateOf("") }
     var phone by remember { mutableStateOf("") }
+    var address by remember { mutableStateOf("") }
+    var address_detail by remember { mutableStateOf("") }
 
     // 수정 완료 후 상태 관리
     var isEditSuccess by remember { mutableStateOf(false) }
@@ -171,6 +173,31 @@ fun ProfileManagementScreen(
                     shape = RoundedCornerShape(8.dp),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
                 )
+
+                // 주소 필드
+                OutlinedTextField(
+                    value = address,
+                    onValueChange = { address = it },
+                    label = { Text("주소") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    shape = RoundedCornerShape(8.dp),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
+                )
+
+                // 상세주소 필드
+                OutlinedTextField(
+                    value = address_detail,
+                    onValueChange = { address_detail = it },
+                    label = { Text("상세주소") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    shape = RoundedCornerShape(8.dp),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
+                )
+
 
                 Spacer(modifier = Modifier.height(24.dp))
 
