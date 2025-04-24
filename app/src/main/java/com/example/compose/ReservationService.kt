@@ -31,7 +31,7 @@ class ReservationService {
     ): ApiResult<JSONObject> = withContext(Dispatchers.IO) {
         // JSON 요청 본문 생성
         val jsonBody = JSONObject().apply {
-            put("user_id", userId)  // user_id 컬럼에 userId 추가
+            put("user_id", userId.toInt())  // user_id 컬럼에 userId 추가
             put("name", name)
             put("phone", phone)
             put("hospital", hospital)
@@ -54,7 +54,7 @@ class ReservationService {
     suspend fun getUserReservations(userId: String): ApiResult<JSONObject> = withContext(Dispatchers.IO) {
         try {
             // GET 요청 실행 (API 형식에 맞게 URL 구성)
-            val url = "${ApiConstants.RESERVATION_URL}/user/$userId"
+            val url = "${ApiConstants.RESERVATION_SEARCH_URL}/$userId"
             ApiServiceCommon.getRequest(url)
         } catch (e: Exception) {
             ApiResult.Error(message = "예약 내역 조회 중 오류 발생: ${e.message}")
