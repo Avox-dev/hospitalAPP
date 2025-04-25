@@ -27,6 +27,7 @@ import com.example.compose.viewmodel.CommunityViewModel
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.material3.Text
+import com.example.compose.WithdrawAccountScreen
 import com.example.compose.ui.screens.ChangePasswordScreen
 
 sealed class Screen(val route: String) {
@@ -50,6 +51,7 @@ sealed class Screen(val route: String) {
         fun createRoute(postId: String) = "post_detail/$postId"
     }
     object ChangePassword : Screen("change_password")
+    object WithdrawAccount : Screen("withdraw_account")
 }
 
 @Composable
@@ -234,6 +236,20 @@ fun AppNavigation(
             } else {
                 Text("게시글을 찾을 수 없습니다.")
             }
+        }
+
+        // 회원탈퇴 화면
+        composable(Screen.WithdrawAccount.route) {
+            WithdrawAccountScreen(
+                onNavigateBack = {
+                    navController.popBackStack()
+                },
+                onWithdrawConfirm = {
+                    // TODO: 탈퇴 처리 후 이동할 화면 정의
+                    // 예: navController.navigate(Screen.Login.route) 또는 Snackbar 등
+                    navController.popBackStack()  // 일단 뒤로 가기만 넣음
+                }
+            )
         }
 
     }
