@@ -102,5 +102,26 @@ class UserService {
         ApiServiceCommon.postRequest(ApiConstants.LOGOUT_URL, JSONObject())
     }
 
+    /**
+     * 비밀번호 변경 API 요청
+     * @param current_password 기존 비밀번호
+     * @param new_password 새 비밀번호
+     * @return 로그인 처리 결과
+     */
+    suspend fun updatePwd(
+        current_password: String,
+        new_password: String,
+
+        ): ApiResult<JSONObject> = withContext(Dispatchers.IO) {
+        // JSON 요청 본문 생성
+        val jsonBody = JSONObject().apply {
+            put("current_password", current_password)
+            put("new_password", new_password)
+        }
+
+        // API 요청 실행
+        ApiServiceCommon.postRequest(ApiConstants.CHANGEPWD_URL, jsonBody)
+    }
+
 }
 

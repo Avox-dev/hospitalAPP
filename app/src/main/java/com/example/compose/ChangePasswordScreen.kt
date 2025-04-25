@@ -19,19 +19,22 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.compose.viewmodel.ChangePasswordViewModel
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ChangePasswordScreen(
     onNavigateBack: () -> Unit,
-    onPasswordChanged: () -> Unit
+    onPasswordChanged: () -> Unit,
+    viewModel: ChangePasswordViewModel = viewModel()
 ) {
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
 
-    var currentPassword by remember { mutableStateOf("") }
-    var newPassword by remember { mutableStateOf("") }
+    var current_password by remember { mutableStateOf("") }
+    var new_password by remember { mutableStateOf("") }
     var confirmPassword by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
 
@@ -62,8 +65,8 @@ fun ChangePasswordScreen(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             OutlinedTextField(
-                value = currentPassword,
-                onValueChange = { currentPassword = it },
+                value = current_password,
+                onValueChange = { current_password = it },
                 label = { Text("현재 비밀번호") },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -74,8 +77,8 @@ fun ChangePasswordScreen(
             )
 
             OutlinedTextField(
-                value = newPassword,
-                onValueChange = { newPassword = it },
+                value = new_password,
+                onValueChange = { new_password = it },
                 label = { Text("새 비밀번호") },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -102,14 +105,14 @@ fun ChangePasswordScreen(
             Button(
                 onClick = {
                     when {
-                        currentPassword.isBlank() ||
-                        newPassword.isBlank() ||
+                        current_password.isBlank() ||
+                        new_password.isBlank() ||
                         confirmPassword.isBlank() -> {
                             scope.launch {
                                 snackbarHostState.showSnackbar("모든 필드를 입력해주세요.")
                             }
                         }
-                        newPassword != confirmPassword -> {
+                        new_password != confirmPassword -> {
                             scope.launch {
                                 snackbarHostState.showSnackbar("새 비밀번호가 일치하지 않습니다.")
                             }
@@ -118,7 +121,7 @@ fun ChangePasswordScreen(
                             isLoading = true
                             // TODO: API 호출하여 비밀번호 변경 로직 수행
                             // ex) UserRepository.changePassword(currentPassword, newPassword)
-
+                            viewModel.updatePwd(current_password, new_password)
                             // 결과에 따라
                             isLoading = false
                             onPasswordChanged()
