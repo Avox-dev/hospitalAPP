@@ -37,13 +37,16 @@ fun ProfileManagementScreen(
 
     // 폼 상태 관리
     var userId by remember { mutableStateOf(currentUser?.userName ?: "") }
-    var birthdateGMT by remember { mutableStateOf(currentUser?.birthdate ?: "사용자") }
+
+    val birthdateGMT = currentUser?.birthdate ?: ""
+    val initialBirthdate = convertGmtToDateString(birthdateGMT)
+    var birthdate by remember { mutableStateOf(initialBirthdate) }
+
     var email by remember { mutableStateOf(currentUser?.email ?: "") }
     var phone by remember { mutableStateOf(currentUser?.phone ?: "") }
     var address by remember { mutableStateOf(currentUser?.address ?: "") }
     var address_detail by remember { mutableStateOf(currentUser?.address_detail ?: "") }
 
-    var birthdate = convertGmtToDateString(birthdateGMT)
     // 수정 완료 후 상태 관리
     var isEditSuccess by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
