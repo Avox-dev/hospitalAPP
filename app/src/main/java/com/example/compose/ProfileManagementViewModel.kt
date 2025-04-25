@@ -9,6 +9,11 @@ import com.example.compose.data.UserService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.ZoneId
+import java.time.ZonedDateTime
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 
 class ProfileManagementViewModel : ViewModel() {
 
@@ -51,10 +56,17 @@ class ProfileManagementViewModel : ViewModel() {
                             val currentUser = UserRepository.getInstance().currentUser.value
 
                             if (currentUser != null) {
+                                val inputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd") // 예: 1234-12-12
+                                val localDate = LocalDate.parse(birthdate, inputFormatter)
+
+                                val gmtDateTime = localDate
+                                    .atStartOfDay(ZoneId.of("GMT"))  // GMT 기준 시간
+                                    .format(DateTimeFormatter.RFC_1123_DATE_TIME.withLocale(Locale.US))  // Tue, 12 Dec 1234 00:00:00 GMT
+
                                 val updatedUser = currentUser.copy(
                                     email = email,
                                     phone = phone,
-                                    birthdate = birthdate,
+                                    birthdate = gmtDateTime,
                                     address = address,
                                     address_detail = address_detail
                                 )
@@ -66,6 +78,8 @@ class ProfileManagementViewModel : ViewModel() {
                             // 4) 스크린에서 감지할 성공 플래그 true
                             _isEditSuccess.value = true
                             }
+
+
 
                         } else {
                             _updateState.value = UpdateState.Error(message)
