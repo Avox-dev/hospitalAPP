@@ -329,6 +329,20 @@ fun MenuListSection(
             title = "고객 센터(미구현)",
             subtitle = "문의하기, 공지사항, FAQ"
         )
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            contentAlignment = Alignment.Center
+        ) {
+            Text(
+                text = "회원탈퇴",
+                fontSize = 16.sp,
+                color = Color(0xFFD0BCFF),
+                textAlign = TextAlign.Center
+            )
+        }
     }
 }
 
