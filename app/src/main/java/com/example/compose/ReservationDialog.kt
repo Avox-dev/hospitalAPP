@@ -38,6 +38,7 @@ fun ReservationDialog(
 ) {
     var message by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
+    var reservation_time by remember { mutableStateOf("") } // 예약 시간 상태 추가
 
     // 예약 상태 관찰
     val reservationState by viewModel.reservationState.collectAsState()
@@ -120,6 +121,22 @@ fun ReservationDialog(
 
                 Spacer(modifier = Modifier.height(16.dp))
 
+                // 예약 시간 입력 필드
+                OutlinedTextField(
+                    value = reservation_time,
+                    onValueChange = { reservation_time = it },
+                    label = { Text("예약 희망 시간") },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(8.dp),
+                    placeholder = { Text("예:YYYY-MM-DD HH:MM") },
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = Purple80,
+                        unfocusedBorderColor = Color.LightGray
+                    )
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+
                 // 예약 메시지 입력 필드
                 OutlinedTextField(
                     value = message,
@@ -196,7 +213,8 @@ fun ReservationDialog(
                                     hospital = place.name,
                                     address = place.address,
                                     message = message,
-                                    email = if (email.isNotBlank()) email else null
+                                    email = if (email.isNotBlank()) email else null,
+                                    reservation_time = if (reservation_time.isNotBlank()) reservation_time else null // 예약 시간 추가
                                 )
                             }
                         },

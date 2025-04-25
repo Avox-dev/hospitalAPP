@@ -27,7 +27,9 @@ class ReservationService {
         hospital: String,
         address: String,
         message: String,
-        email: String? = null
+        email: String? = null,
+        reservation_time: String? = null,  // 추가된 필드
+        timestamp: Long = System.currentTimeMillis()
     ): ApiResult<JSONObject> = withContext(Dispatchers.IO) {
         // JSON 요청 본문 생성
         val jsonBody = JSONObject().apply {
@@ -37,6 +39,8 @@ class ReservationService {
             put("hospital", hospital)
             put("address", address)
             put("message", message)
+            put("reservation_time", reservation_time)
+            put("timestamp", timestamp)
             if (!email.isNullOrBlank()) {
                 put("email", email)
             }

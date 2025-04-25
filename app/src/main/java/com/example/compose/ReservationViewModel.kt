@@ -28,7 +28,8 @@ class ReservationViewModel : ViewModel() {
         hospital: String,
         address: String,
         message: String,
-        email: String? = null
+        email: String? = null,
+        reservation_time: String? = null
     ) {
         // 현재 로그인된 사용자 확인
         val currentUser = userRepository.currentUser.value
@@ -55,7 +56,8 @@ class ReservationViewModel : ViewModel() {
                     hospital = hospital,
                     address = address,
                     message = message,
-                    email = email
+                    email = email,
+                    reservation_time= reservation_time
                 )
 
                 // 결과 처리
