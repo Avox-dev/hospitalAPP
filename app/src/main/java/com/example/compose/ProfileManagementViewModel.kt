@@ -4,6 +4,7 @@ package com.example.compose.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.example.compose.data.ApiResult
+import com.example.compose.data.UserRepository
 import com.example.compose.data.UserService
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -46,10 +47,26 @@ class ProfileManagementViewModel : ViewModel() {
                         val message = responseData.optString("message")
 
                         if (status == "success") {
+
+                            val currentUser = UserRepository.getInstance().currentUser.value
+
+                            if (currentUser != null) {
+                                val updatedUser = currentUser.copy(
+                                    email = email,
+                                    phone = phone,
+                                    birthdate = birthdate,
+                                    address = address,
+                                    address_detail = address_detail
+                                )
+
+                                UserRepository.getInstance().setCurrentUser(updatedUser)
+
                             // 3) 성공 상태 표시
                             _updateState.value = UpdateState.Success(message)
                             // 4) 스크린에서 감지할 성공 플래그 true
                             _isEditSuccess.value = true
+                            }
+
                         } else {
                             _updateState.value = UpdateState.Error(message)
                         }
