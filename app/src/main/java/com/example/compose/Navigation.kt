@@ -144,8 +144,9 @@ fun AppNavigation(
         // 내 정보 관리 화면
         composable(Screen.ProfileManagement.route) {
             ProfileManagementScreen(
-                onNavigateBack = { navController.popBackStack() },
-                onNavigateChangePassword = { navController.navigate(Screen.ChangePassword.route) }
+                onNavigateBack         = { navController.popBackStack() },
+                onNavigateChangePassword = { navController.navigate(Screen.ChangePassword.route) },
+                onNavigateHome         = { navController.navigate(Screen.Home.route) }
             )
         }
         // 비밀번호 변경 화면

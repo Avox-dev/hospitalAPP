@@ -1,7 +1,6 @@
 // ProfileManagementScreen.kt
 package com.example.compose.ui.screens
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -29,32 +28,30 @@ import java.util.*
 fun ProfileManagementScreen(
     onNavigateBack: () -> Unit,
     onNavigateChangePassword: () -> Unit,
+    onNavigateHome: () -> Unit,
     viewModel: ProfileManagementViewModel = viewModel()
 ) {
-    // UserRepository에서 현재 로그인한 사용자 정보 가져오기
     val userRepository = UserRepository.getInstance()
     val currentUser by userRepository.currentUser.collectAsState()
 
-    // 폼 상태 관리
     var userId by remember { mutableStateOf(currentUser?.userName ?: "") }
-
     val birthdateGMT = currentUser?.birthdate ?: ""
-    val initialBirthdate = convertGmtToDateString(birthdateGMT)
-    var birthdate by remember { mutableStateOf(initialBirthdate) }
-
+    var birthdate by remember { mutableStateOf(convertGmtToDateString(birthdateGMT)) }
     var email by remember { mutableStateOf(currentUser?.email ?: "") }
     var phone by remember { mutableStateOf(currentUser?.phone ?: "") }
     var address by remember { mutableStateOf(currentUser?.address ?: "") }
-    var address_detail by remember { mutableStateOf(currentUser?.address_detail ?: "") }
+    var addressDetail by remember { mutableStateOf(currentUser?.address_detail ?: "") }
 
-    // 수정 완료 후 상태 관리
-    var isEditSuccess by remember { mutableStateOf(false) }
+    // 1) ViewModel의 성공 플래그 구독
+    val isEditSuccess by viewModel.isEditSuccess.collectAsState()
     val snackbarHostState = remember { SnackbarHostState() }
 
+    // 2) 성공 시 스낵바 → 홈 이동 → 플래그 초기화
     LaunchedEffect(isEditSuccess) {
         if (isEditSuccess) {
             snackbarHostState.showSnackbar("회원정보가 수정되었습니다.")
-            isEditSuccess = false
+            onNavigateHome()
+            viewModel.clearEditSuccess()
         }
     }
 
@@ -67,28 +64,21 @@ fun ProfileManagementScreen(
                         Icon(Icons.Filled.ArrowBack, contentDescription = "뒤로가기")
                     }
                 },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.White
-                )
+                colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.White)
             )
         },
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
         if (currentUser == null) {
-            // 로그인되지 않은 경우
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues),
                 contentAlignment = Alignment.Center
             ) {
-                Text(
-                    text = "로그인이 필요한 서비스입니다.",
-                    fontSize = 18.sp
-                )
+                Text("로그인이 필요한 서비스입니다.", fontSize = 18.sp)
             }
         } else {
-            // 로그인된 경우, 프로필 정보 표시 및 수정 폼
             Column(
                 modifier = Modifier
                     .fillMaxSize()
@@ -104,10 +94,7 @@ fun ProfileManagementScreen(
                         .padding(vertical = 24.dp),
                     contentAlignment = Alignment.Center
                 ) {
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        // 프로필 아이콘 (원형)
+                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
                         Box(
                             modifier = Modifier
                                 .size(80.dp)
@@ -121,24 +108,18 @@ fun ProfileManagementScreen(
                                 color = Color(0xFF6650a4)
                             )
                         }
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Text(
-                            text = currentUser?.userName ?: "",
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold
-                        )
+                        Spacer(Modifier.height(8.dp))
+                        Text(currentUser?.userName ?: "", fontSize = 20.sp, fontWeight = FontWeight.Bold)
                     }
                 }
 
                 Divider()
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(Modifier.height(24.dp))
 
-                // 아이디 필드 (읽기 전용)
+                // 읽기 전용 이름
                 OutlinedTextField(
                     value = userId,
-                    onValueChange = { },
+                    onValueChange = {},
                     label = { Text("이름") },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -147,8 +128,7 @@ fun ProfileManagementScreen(
                     readOnly = true,
                     enabled = false
                 )
-
-                // 이름 필드
+                // 생일
                 OutlinedTextField(
                     value = birthdate,
                     onValueChange = { birthdate = it },
@@ -158,8 +138,7 @@ fun ProfileManagementScreen(
                         .padding(vertical = 8.dp),
                     shape = RoundedCornerShape(8.dp)
                 )
-
-                // 이메일 필드
+                // 이메일
                 OutlinedTextField(
                     value = email,
                     onValueChange = { email = it },
@@ -170,8 +149,7 @@ fun ProfileManagementScreen(
                     shape = RoundedCornerShape(8.dp),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
                 )
-
-                // 전화번호 필드
+                // 전화번호
                 OutlinedTextField(
                     value = phone,
                     onValueChange = { phone = it },
@@ -182,8 +160,7 @@ fun ProfileManagementScreen(
                     shape = RoundedCornerShape(8.dp),
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
                 )
-
-                // 주소 필드
+                // 주소
                 OutlinedTextField(
                     value = address,
                     onValueChange = { address = it },
@@ -191,83 +168,64 @@ fun ProfileManagementScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 8.dp),
-                    shape = RoundedCornerShape(8.dp),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
+                    shape = RoundedCornerShape(8.dp)
                 )
-
-                // 상세주소 필드
+                // 상세주소
                 OutlinedTextField(
-                    value = address_detail,
-                    onValueChange = { address_detail = it },
+                    value = addressDetail,
+                    onValueChange = { addressDetail = it },
                     label = { Text("상세주소") },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 8.dp),
-                    shape = RoundedCornerShape(8.dp),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
+                    shape = RoundedCornerShape(8.dp)
                 )
 
+                Spacer(Modifier.height(24.dp))
 
-                Spacer(modifier = Modifier.height(24.dp))
-
-                // 정보 수정 버튼
                 Button(
                     onClick = {
-                        // 사용자 정보 업데이트
                         viewModel.update(
                             birthdate = birthdate,
                             email = email,
                             phone = phone,
                             address = address,
-                            address_detail = address_detail,
+                            address_detail = addressDetail
                         )
                     },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFFD0BCFF)
-                    ),
+                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD0BCFF)),
                     shape = RoundedCornerShape(8.dp)
                 ) {
-                    Text(
-                        text = "정보 수정",
-                        fontSize = 16.sp,
-                        color = Color.Black
-                    )
+                    Text("정보 수정", fontSize = 16.sp, color = Color.Black)
                 }
 
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(Modifier.height(16.dp))
 
-                // 비밀번호 변경 버튼
                 OutlinedButton(
                     onClick = onNavigateChangePassword,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp),
                     shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = Color(0xFF6650a4)
-                    )
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Color(0xFF6650a4))
                 ) {
-                    Text(
-                        text = "비밀번호 변경",
-                        fontSize = 16.sp
-                    )
+                    Text("비밀번호 변경", fontSize = 16.sp)
                 }
 
-                Spacer(modifier = Modifier.height(40.dp))
+                Spacer(Modifier.height(40.dp))
             }
         }
     }
 }
 
-fun convertGmtToDateString(gmtString: String): String {
+private fun convertGmtToDateString(gmtString: String): String {
     return try {
         val inputFormat = SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.ENGLISH)
         val outputFormat = SimpleDateFormat("yyyy-MM-dd", Locale.KOREA)
-
-        val date: Date = inputFormat.parse(gmtString) ?: return ""
+        val date = inputFormat.parse(gmtString) ?: return ""
         outputFormat.format(date)
     } catch (e: Exception) {
         e.printStackTrace()
