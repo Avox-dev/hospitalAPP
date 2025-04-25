@@ -7,7 +7,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,9 +16,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.compose.viewmodel.CommunityViewModel
-
-// (생략된 import는 동일)
-
 import com.example.compose.data.UserRepository // ← 로그인 상태 확인을 위해 추가
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -67,9 +63,8 @@ fun WritePostScreen(
     // ✅ 로그인된 경우
     var title by remember { mutableStateOf("") }
     var content by remember { mutableStateOf("") }
-    var expanded by remember { mutableStateOf(false) }
-    val categories = listOf("질문", "자유")
-    var selectedCategory by remember { mutableStateOf(categories[0]) }
+    // 카테고리 항상 "일반"으로 고정
+    val defaultCategory = "일반"
 
     Scaffold(
         topBar = {
@@ -86,7 +81,7 @@ fun WritePostScreen(
                 actions = {
                     TextButton(
                         onClick = {
-                            viewModel.addPost(title, content, selectedCategory)
+                            viewModel.addPost(title, content, defaultCategory)
                             onPostSuccess()
                         },
                         enabled = title.isNotBlank() && content.isNotBlank()
@@ -111,49 +106,7 @@ fun WritePostScreen(
                 .padding(16.dp)
                 .verticalScroll(rememberScrollState())
         ) {
-            // 카테고리 선택
-            Box {
-                OutlinedButton(
-                    onClick = { expanded = true },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(56.dp),
-                    shape = RoundedCornerShape(8.dp),
-                    colors = ButtonDefaults.outlinedButtonColors(
-                        contentColor = Color.Black
-                    )
-                ) {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(text = selectedCategory)
-                        Icon(
-                            imageVector = Icons.Default.KeyboardArrowDown,
-                            contentDescription = "드롭다운"
-                        )
-                    }
-                }
-
-                DropdownMenu(
-                    expanded = expanded,
-                    onDismissRequest = { expanded = false },
-                    modifier = Modifier.fillMaxWidth(0.94f)
-                ) {
-                    categories.forEach { category ->
-                        DropdownMenuItem(
-                            text = { Text(text = category) },
-                            onClick = {
-                                selectedCategory = category
-                                expanded = false
-                            }
-                        )
-                    }
-                }
-            }
-
-            Spacer(modifier = Modifier.height(16.dp))
+            // 카테고리 선택 부분 제거됨
 
             OutlinedTextField(
                 value = title,
@@ -175,7 +128,7 @@ fun WritePostScreen(
                 label = { Text("내용을 입력하세요") },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(300.dp),
+                    .height(350.dp), // 높이 증가
                 shape = RoundedCornerShape(8.dp),
                 colors = OutlinedTextFieldDefaults.colors(
                     focusedBorderColor = Color(0xFFD0BCFF),

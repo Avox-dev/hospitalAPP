@@ -77,8 +77,7 @@ object PostRepository {
         val id = postJson.optString("id", "")
         val title = postJson.optString("title", "")
         val content = postJson.optString("comment", "")  // API는 comment 필드 사용
-        val author = postJson.optString("username", "익명")
-        val category = postJson.optString("category", "일반")
+        val writer = postJson.optString("writer","writer")
         val createdAt = postJson.optString("created_at", "")
         val likes = postJson.optInt("likes", 0)
         val comments = postJson.optInt("comments", 0)
@@ -90,8 +89,7 @@ object PostRepository {
             id = id,
             title = title,
             content = content,
-            author = author,
-            category = category,
+            writer = writer,
             timeAgo = timeAgo,
             likes = likes,
             comments = comments
@@ -124,10 +122,10 @@ object PostRepository {
 
 
     // 게시글 추가 메서드 - API 연동
-    fun addPost(title: String, content: String, category: String) {
+    fun addPost(title: String, content: String, writer: String) {
         coroutineScope.launch {
             try {
-                val result = createPostApi(title, content, category)
+                val result = createPostApi(title, content, writer)
 
                 if (result is ApiResult.Success) {
                     val jsonResponse = result.data
@@ -139,23 +137,23 @@ object PostRepository {
                     } else {
                         // API 요청은 성공했지만 서버에서 오류 반환
                         println("게시글 추가 실패: ${jsonResponse.optString("message", "알 수 없는 오류")}")
-                        addPostLocally(title, content, category)
+                        addPostLocally(title, content, writer)
                     }
                 } else if (result is ApiResult.Error) {
                     // API 요청 자체가 실패
                     println("게시글 추가 요청 실패: ${result.message}")
-                    addPostLocally(title, content, category)
+                    addPostLocally(title, content, writer)
                 }
             } catch (e: Exception) {
                 println("게시글 추가 중 예외 발생: ${e.message}")
-                addPostLocally(title, content, category)
+                addPostLocally(title, content, writer)
             }
         }
     }
 
     // 게시글 생성 API 요청 - ApiServiceCommon 활용
     // PostRepository.kt의 createPostApi 메서드 수정
-    private suspend fun createPostApi(title: String, content: String, category: String): ApiResult<JSONObject> = withContext(Dispatchers.IO) {
+    private suspend fun createPostApi(title: String, content: String, writer: String): ApiResult<JSONObject> = withContext(Dispatchers.IO) {
         // UserRepository에서 현재 로그인한 사용자 정보 가져오기
         val userRepository = UserRepository.getInstance()
         val currentUser = userRepository.currentUser.value
@@ -165,8 +163,7 @@ object PostRepository {
         val jsonBody = JSONObject().apply {
             put("title", title)
             put("comment", content)  // API는 comment 필드 사용
-            put("category", category)
-            put("username", username)  // 실제 현재 로그인한 사용자 이름 사용
+            put("username", writer) // 실제 현재 로그인한 사용자 이름 사용
         }
 
         return@withContext ApiServiceCommon.postRequest(ApiConstants.POSTS_URL, jsonBody)
@@ -174,7 +171,7 @@ object PostRepository {
 
     // API 호출 실패 시 로컬에 게시글 추가 (임시 방편)
     // addPostLocally 메서드 수정
-    private fun addPostLocally(title: String, content: String, category: String) {
+    private fun addPostLocally(title: String, content: String, writer: String) {
         val userRepository = UserRepository.getInstance()
         val currentUser = userRepository.currentUser.value
 
@@ -184,9 +181,8 @@ object PostRepository {
         val newPost = Post(
             id = newId,
             title = title,
-            content = content,
-            author = username,  // 실제 사용자 이름 사용
-            category = category,
+            content = content,// 실제 사용자 이름 사용
+            writer = username,
             timeAgo = "방금 전",
             likes = 0,
             comments = 0

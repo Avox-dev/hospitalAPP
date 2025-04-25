@@ -45,7 +45,6 @@ fun PostDetailScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(text = post.title, fontSize = 22.sp, fontWeight = FontWeight.Bold)
-                Text(text = post.category, fontSize = 14.sp)
             }
 
             Spacer(modifier = Modifier.height(8.dp))
@@ -56,7 +55,7 @@ fun PostDetailScreen(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(text = "작성자: ${post.author}", fontSize = 14.sp)
+                Text(text = "작성자: ${post.writer}", fontSize = 14.sp)
                 Text(text = "좋아요: ${post.likes}", fontSize = 14.sp)
             }
 

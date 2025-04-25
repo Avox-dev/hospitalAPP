@@ -77,16 +77,15 @@ class CommunityViewModel : ViewModel() {
         }
     }
 
-    fun addPost(title: String, content: String, category: String) {
-        PostRepository.addPost(title, content, category)
+    fun addPost(title: String, content: String, writer: String) {
+        PostRepository.addPost(title, content, writer)
     }
 
     data class Post(
         val id: String,
         val title: String,
         val content: String,
-        val author: String,
-        val category: String,
+        val writer: String,
         val timeAgo: String,
         val likes: Int,
         val comments: Int

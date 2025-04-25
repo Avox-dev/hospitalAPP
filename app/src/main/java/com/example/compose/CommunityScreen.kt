@@ -41,7 +41,7 @@ fun CommunityScreen(
     var selectedTab by remember { mutableStateOf(0) }
 
     // 카테고리 필터링 (QnA 탭에서만 사용)
-    val categories = listOf("전체", "질문", "자유")
+    val categories = listOf("전체")
     var selectedCategory by remember { mutableStateOf("전체") }
 
     Scaffold(
@@ -145,7 +145,7 @@ fun CommunityScreen(
                                 .padding(horizontal = 16.dp)
                         ) {
                             items(posts.filter {
-                                selectedCategory == "전체" || it.category == selectedCategory
+                                selectedCategory == "전체" || it.writer == selectedCategory
                             }) { post ->
                                 PostItem(
                                     post = post,
@@ -198,19 +198,6 @@ fun PostItem(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Box(
-                modifier = Modifier
-                    .clip(RoundedCornerShape(12.dp))
-                    .background(Color(0xFFF0F0F0))
-                    .padding(horizontal = 8.dp, vertical = 4.dp)
-            ) {
-                Text(
-                    text = post.category,
-                    fontSize = 12.sp,
-                    color = Color.Gray
-                )
-            }
-
             Text(
                 text = post.timeAgo,
                 fontSize = 12.sp,
@@ -268,7 +255,7 @@ fun PostItem(
 
             // 작성자 이름
             Text(
-                text = post.author,
+                text = post.writer,
                 fontSize = 12.sp,
                 color = Color.Gray
             )
