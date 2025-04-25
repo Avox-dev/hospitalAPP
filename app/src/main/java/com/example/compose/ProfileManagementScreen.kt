@@ -21,6 +21,8 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.compose.data.UserRepository
 import com.example.compose.viewmodel.ProfileManagementViewModel
+import java.text.SimpleDateFormat
+import java.util.*
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,12 +37,13 @@ fun ProfileManagementScreen(
 
     // 폼 상태 관리
     var userId by remember { mutableStateOf(currentUser?.userName ?: "") }
-    var birthdate by remember { mutableStateOf(currentUser?.birthdate ?: "사용자") }
+    var birthdateGMT by remember { mutableStateOf(currentUser?.birthdate ?: "사용자") }
     var email by remember { mutableStateOf(currentUser?.email ?: "") }
     var phone by remember { mutableStateOf(currentUser?.phone ?: "") }
     var address by remember { mutableStateOf(currentUser?.address ?: "") }
     var address_detail by remember { mutableStateOf(currentUser?.address_detail ?: "") }
 
+    var birthdate = convertGmtToDateString(birthdateGMT)
     // 수정 완료 후 상태 관리
     var isEditSuccess by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
@@ -253,5 +256,18 @@ fun ProfileManagementScreen(
                 Spacer(modifier = Modifier.height(40.dp))
             }
         }
+    }
+}
+
+fun convertGmtToDateString(gmtString: String): String {
+    return try {
+        val inputFormat = SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss z", Locale.ENGLISH)
+        val outputFormat = SimpleDateFormat("yyyy-MM-dd", Locale.KOREA)
+
+        val date: Date = inputFormat.parse(gmtString) ?: return ""
+        outputFormat.format(date)
+    } catch (e: Exception) {
+        e.printStackTrace()
+        ""
     }
 }
