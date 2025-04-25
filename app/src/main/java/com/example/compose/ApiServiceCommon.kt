@@ -47,6 +47,7 @@ object ApiServiceCommon {
             val sessionId = UserRepository.getInstance().getSessionId()
             Log.d("ApiServiceCommon", "세션 아이디 값 확인: $sessionId")
             //세션 아이디 추가
+
             jsonBody.put("session", UserRepository.getInstance().getSessionId())
 
 
@@ -59,6 +60,7 @@ object ApiServiceCommon {
             val request = Request.Builder()
                 .url(url)
                 .post(requestBody)
+                .addHeader("Cookie", "session=$sessionId")
                 .build()
 
             executeRequest(request)

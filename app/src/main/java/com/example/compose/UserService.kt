@@ -74,15 +74,19 @@ class UserService {
      * @return 업데이트 처리 결과
      */
     suspend fun updateUserInfo(
-        userId: String,
-        updateData: Map<String, Any>
+        email: String,
+        phone: String,
+        birthdate: String,
+        address: String,
+        address_detail: String
     ): ApiResult<JSONObject> = withContext(Dispatchers.IO) {
         // JSON 요청 본문 생성
         val jsonBody = JSONObject().apply {
-            put("userId", userId)
-            updateData.forEach { (key, value) ->
-                put(key, value)
-            }
+            put("email", email)
+            put("phone", phone)
+            put("birthdate", birthdate)
+            put("address", address)
+            put("address_detail", address_detail)
         }
 
         // API 요청 실행

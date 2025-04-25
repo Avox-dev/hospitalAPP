@@ -18,14 +18,16 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.compose.data.UserRepository
-import com.example.compose.data.User
+import com.example.compose.viewmodel.ProfileManagementViewModel
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfileManagementScreen(
     onNavigateBack: () -> Unit,
-    onNavigateChangePassword: () -> Unit
+    onNavigateChangePassword: () -> Unit,
+    viewModel: ProfileManagementViewModel = viewModel()
 ) {
     // UserRepository에서 현재 로그인한 사용자 정보 가져오기
     val userRepository = UserRepository.getInstance()
@@ -33,7 +35,7 @@ fun ProfileManagementScreen(
 
     // 폼 상태 관리
     var userId by remember { mutableStateOf(currentUser?.userName ?: "") }
-    var userName by remember { mutableStateOf(currentUser?.userName ?: "사용자") }
+    var birthdate by remember { mutableStateOf(currentUser?.birthdate ?: "사용자") }
     var email by remember { mutableStateOf(currentUser?.email ?: "") }
     var phone by remember { mutableStateOf(currentUser?.phone ?: "") }
     var address by remember { mutableStateOf(currentUser?.address ?: "") }
@@ -131,7 +133,7 @@ fun ProfileManagementScreen(
                 OutlinedTextField(
                     value = userId,
                     onValueChange = { },
-                    label = { Text("아이디") },
+                    label = { Text("이름") },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 8.dp),
@@ -142,9 +144,9 @@ fun ProfileManagementScreen(
 
                 // 이름 필드
                 OutlinedTextField(
-                    value = userName,
-                    onValueChange = { userName = it },
-                    label = { Text("이름") },
+                    value = birthdate,
+                    onValueChange = { birthdate = it },
+                    label = { Text("생일") },
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(vertical = 8.dp),
@@ -206,10 +208,13 @@ fun ProfileManagementScreen(
                 Button(
                     onClick = {
                         // 사용자 정보 업데이트
-                        userRepository.setCurrentUser(
-                            User(userId = userId, userName = userName)
+                        viewModel.update(
+                            birthdate = birthdate,
+                            email = email,
+                            phone = phone,
+                            address = address,
+                            address_detail = address_detail,
                         )
-                        isEditSuccess = true
                     },
                     modifier = Modifier
                         .fillMaxWidth()
