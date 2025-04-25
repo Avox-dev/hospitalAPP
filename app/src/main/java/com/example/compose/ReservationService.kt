@@ -18,6 +18,8 @@ class ReservationService {
      * @param address 병원 주소
      * @param message 예약 메시지/증상
      * @param email 이메일 (선택)
+     * @param reservation_time 예약 시간
+     * @param timestamp 타임 스탬프
      * @return 예약 처리 결과
      */
     suspend fun makeReservation(
