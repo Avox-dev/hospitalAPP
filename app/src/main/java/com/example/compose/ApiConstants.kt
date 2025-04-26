@@ -13,8 +13,6 @@ object ApiConstants {
     const val CHANGEPWD_URL = "$BASE_URL/users/change-password"
     const val WITHDRAW_URL = "$BASE_URL/users/withdraw"
 
-    // 병원 검색 관련 API
-    const val HOSPITAL_SEARCH_URL = "$BASE_URL/hospitals/search"
 
     // 예약 관련 API
     const val RESERVATION_URL = "$BASE_URL/reservations"
