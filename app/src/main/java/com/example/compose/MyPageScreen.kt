@@ -46,7 +46,7 @@ fun MyPageScreen(
     // UserRepository의 로그인 상태 감시
     val userRepository = UserRepository.getInstance()
     val currentUser by userRepository.currentUser.collectAsState()
-
+    
     Column(modifier = Modifier.fillMaxSize()) {
         // 상단 앱바에 사용자 정보 전달
         MyPageTopBar(

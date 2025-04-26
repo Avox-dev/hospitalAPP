@@ -14,9 +14,10 @@ import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
+// ✅ 프로필 관리 (회원 정보 수정) 기능을 담당하는 ViewModel
 class ProfileManagementViewModel : ViewModel() {
 
-    private val userService = UserService()
+    private val userService = UserService() // 사용자 API 서비스 인스턴스
 
     // 화면에 보여줄 업데이트 상태
     private val _updateState = MutableStateFlow<UpdateState>(UpdateState.Initial)
@@ -27,7 +28,12 @@ class ProfileManagementViewModel : ViewModel() {
     val isEditSuccess: StateFlow<Boolean> = _isEditSuccess
 
     /**
-     * 사용자 정보 업데이트
+     * ✅ 사용자 정보 업데이트 요청
+     * @param email 이메일
+     * @param phone 전화번호
+     * @param birthdate 생년월일
+     * @param address 주소
+     * @param address_detail 상세 주소
      */
     fun update(
         email: String,
@@ -37,13 +43,15 @@ class ProfileManagementViewModel : ViewModel() {
         address_detail: String
     ) {
         viewModelScope.launch {
-            // 1) 수정 시도 전에는 항상 false로 초기화
+            // 1) 수정 시작할 때 성공 플래그 초기화
             _isEditSuccess.value = false
-            // 2) 로딩 상태 표시
+            // 2) 로딩 상태로 전환
             _updateState.value = UpdateState.Loading
 
             try {
+                // 서버에 사용자 정보 업데이트 요청
                 val result = userService.updateUserInfo(email, phone, birthdate, address, address_detail)
+
                 when (result) {
                     is ApiResult.Success -> {
                         val responseData = result.data
@@ -52,17 +60,18 @@ class ProfileManagementViewModel : ViewModel() {
 
                         if (status == "success") {
 
+                            // 현재 로그인한 사용자 정보 가져오기
                             val currentUser = UserRepository.getInstance().currentUser.value
 
                             if (currentUser != null) {
-                                //시간 형식 변환
+                                // ✅ 생년월일 포맷 변환 (yyyy-MM-dd → RFC 1123 GMT 표준 포맷)
                                 val inputFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd") // 예: 1234-12-12
                                 val localDate = LocalDate.parse(birthdate, inputFormatter)
                                 val gmtDateTime = localDate
                                     .atStartOfDay(ZoneId.of("GMT"))  // GMT 기준 시간
                                     .format(DateTimeFormatter.RFC_1123_DATE_TIME.withLocale(Locale.US))  // Tue, 12 Dec 1234 00:00:00 GMT
 
-                                // 업데이트 된 내용 클라이언트 저장
+                                // ✅ 수정된 사용자 정보 로컬에 저장
                                 val updatedUser = currentUser.copy(
                                     email = email,
                                     phone = phone,
@@ -70,38 +79,44 @@ class ProfileManagementViewModel : ViewModel() {
                                     address = address,
                                     address_detail = address_detail
                                 )
-
                                 UserRepository.getInstance().setCurrentUser(updatedUser)
 
-                            // 3) 성공 상태 표시
+                            // 3) 업데이트 성공 상태로 변경
                             _updateState.value = UpdateState.Success(message)
-                            // 4) 스크린에서 감지할 성공 플래그 true
-                            _isEditSuccess.value = true
+                                // 4) 성공 플래그 true로 변경
+                                _isEditSuccess.value = true
                             }
 
 
 
                         } else {
+                            // status가 success가 아닐 때 에러 처리
                             _updateState.value = UpdateState.Error(message)
                         }
                     }
                     is ApiResult.Error -> {
+                        // 서버 요청 실패 시
                         _updateState.value = UpdateState.Error(result.message)
                     }
                 }
             } catch (e: Exception) {
+                // 예외 발생 시
                 _updateState.value = UpdateState.Error("정보 수정 중 오류 발생: ${e.message}")
             }
         }
     }
 
     /**
-     * 성공 플래그를 UI 로직에서 다시 쓸 수 있도록 초기화
+     * ✅ 수정 성공 플래그 초기화
+     * (UI에서 상태를 다시 쓸 수 있게 초기화)
      */
     fun clearEditSuccess() {
         _isEditSuccess.value = false
     }
 
+    /**
+     * ✅ 화면에 표시할 업데이트 상태를 나타내는 sealed class
+     */
     sealed class UpdateState {
         object Initial : UpdateState()
         object Loading : UpdateState()

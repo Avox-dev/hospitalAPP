@@ -10,7 +10,7 @@ import org.json.JSONObject
 class ReservationService {
 
     /**
-     * 병원 예약 API 요청
+     * ✅ 병원 예약 API 요청
      * @param userId 사용자 ID
      * @param name 예약자 이름
      * @param phone 연락처
@@ -18,9 +18,9 @@ class ReservationService {
      * @param address 병원 주소
      * @param message 예약 메시지/증상
      * @param email 이메일 (선택)
-     * @param reservation_time 예약 시간
-     * @param timestamp 타임 스탬프
-     * @return 예약 처리 결과
+     * @param reservation_time 예약 시간 (선택)
+     * @param timestamp 예약 생성 시간 (기본값: 현재 시간)
+     * @return 예약 처리 결과 (ApiResult)
      */
     suspend fun makeReservation(
         userId: String,
@@ -48,21 +48,23 @@ class ReservationService {
             }
         }
 
-        // API 요청 실행
+        // 예약 API POST 요청 실행
         ApiServiceCommon.postRequest(ApiConstants.RESERVATION_URL, jsonBody)
     }
 
     /**
-     * 예약 내역 조회 API 요청
+     * ✅ 예약 내역 조회 API 요청
      * @param userId 사용자 ID
-     * @return 예약 내역 목록
+     * @return 예약 내역 조회 결과 (ApiResult)
      */
     suspend fun getUserReservations(userId: String): ApiResult<JSONObject> = withContext(Dispatchers.IO) {
         try {
-            // GET 요청 실행 (API 형식에 맞게 URL 구성)
+            // 예약 조회 API URL 구성
             val url = "${ApiConstants.RESERVATION_SEARCH_URL}/$userId"
+            // 예약 조회 API GET 요청 실행
             ApiServiceCommon.getRequest(url)
         } catch (e: Exception) {
+            // 예외 발생 시 에러 반환
             ApiResult.Error(message = "예약 내역 조회 중 오류 발생: ${e.message}")
         }
     }
