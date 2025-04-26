@@ -16,21 +16,29 @@ import com.example.compose.ui.theme.HospitalAppTheme
 import com.kakao.sdk.common.util.Utility
 import com.kakao.vectormap.KakaoMapSdk
 
+// ✅ 앱의 Entry Point - MainActivity
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // ✅ 카카오 키 해시 출력 (로그인, 지도 연동용)
         var keyHash = Utility.getKeyHash(this)
         Log.d("KeyHash", "KeyHash: $keyHash")
+
+        // ✅ 카카오 지도 SDK 초기화
         KakaoMapSdk.init(this,"bf105d2a0b3861e39aff0e8f49f7f0ce")
+
+        // ✅ Compose 화면 설정
         setContent {
+            // 테마 적용
             HospitalAppTheme {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
-                        .background(Color.White)
+                        .background(Color.White) // 기본 배경 흰색
                 ) {
-                    val navController = rememberNavController()
-                    AppNavigation(navController = navController)
+                    val navController = rememberNavController() // 네비게이션 컨트롤러 생성
+                    AppNavigation(navController = navController) // 네비게이션 그래프 연결
                 }
             }
         }

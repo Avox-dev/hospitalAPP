@@ -16,22 +16,32 @@ import com.example.compose.data.UserRepository
 import com.example.compose.data.ApiResult
 import com.example.compose.data.UserService
 
-
+// ✅ 로그인 처리를 담당하는 ViewModel
 class LoginViewModel : ViewModel() {
-    private val userRepository = UserRepository.getInstance()
-    private val userService = UserService()
+    private val userRepository = UserRepository.getInstance() // 유저 정보 저장소
+    private val userService = UserService() // 로그인 API 호출용
 
+    // 로그인 상태를 관리하는 StateFlow
     private val _loginState = MutableStateFlow<LoginState>(LoginState.Initial)
     val loginState: StateFlow<LoginState> = _loginState.asStateFlow()
 
-    fun login(userId: String, password: String) {
+    /**
+     * ✅ 로그인 처리
+     * @param userId 사용자 ID
+     * @param password 비밀번호
+     */
+    fun login(
+        userId: String,
+        password: String
+    ) {
         viewModelScope.launch {
-            _loginState.value = LoginState.Loading
+            _loginState.value = LoginState.Loading // 로딩 상태 표시
 
-            val maxRetries = 3
+            val maxRetries = 3 // 최대 재시도 횟수
             var retryCount = 0
             var lastException: Exception? = null
 
+            // 재시도 로직
             while (retryCount < maxRetries) {
                 try {
                     val result = withContext(Dispatchers.IO) {
@@ -47,6 +57,7 @@ class LoginViewModel : ViewModel() {
                             val sessionId = responseData.optString("session", null)
 
                             if (status == "success" && sessionId != null) {
+                                // 사용자 정보 파싱
                                 val userData = responseData.optJSONObject("data")
 
                                 if (userData != null) {
@@ -57,6 +68,8 @@ class LoginViewModel : ViewModel() {
                                     val birthdate = userData.optString("birthdate", "")
                                     val address = userData.optString("address", "")
                                     val address_detail = userData.optString("address_detail", "")
+
+                                    // ✅ UserRepository에 로그인 사용자 정보 저장
                                     userRepository.setCurrentUser(
                                         User(
                                             userId = id,
@@ -79,32 +92,39 @@ class LoginViewModel : ViewModel() {
                             } else {
                                 _loginState.value = LoginState.Error("세션 정보를 불러오는데 실패했습니다")
                             }
-                            return@launch
+                            return@launch // 성공했으면 바로 종료
                         }
 
                         is ApiResult.Error -> {
+                            // 서버에서 에러 반환
                             lastException = Exception(result.message)
                         }
                     }
                 } catch (e: Exception) {
+                    // 네트워크 오류 등 예외 발생
                     lastException = e
                 }
 
+                // 실패했을 때 재시도 로직
                 retryCount++
                 if (retryCount < maxRetries) {
-                    delay(1000L * retryCount)
+                    delay(1000L * retryCount) // 점점 대기시간 늘려서 재시도
                 }
             }
 
+            // 최종 실패 처리
             _loginState.value = LoginState.Error("로그인 중 오류가 발생했습니다: ${lastException?.message ?: "알 수 없는 오류"}")
         }
     }
 
 
+    /**
+     * ✅ 로그인 상태를 표현하는 sealed class
+     */
     sealed class LoginState {
-        object Initial : LoginState()
-        object Loading : LoginState()
-        data class Success(val message: String) : LoginState()
-        data class Error(val message: String) : LoginState()
+        object Initial : LoginState() // 초기 상태
+        object Loading : LoginState() // 로딩 중
+        data class Success(val message: String) : LoginState() // 성공 (메시지 포함)
+        data class Error(val message: String) : LoginState() // 실패 (에러 메시지 포함)
     }
 }
