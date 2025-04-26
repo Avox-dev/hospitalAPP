@@ -165,10 +165,9 @@ object PostRepository {
      * ✅ 게시글 추가 API 요청 (POST)
      */
     private suspend fun createPostApi(title: String, content: String, writer: String): ApiResult<JSONObject> = withContext(Dispatchers.IO) {
-        val userRepository = UserRepository.getInstance()
-        val currentUser = userRepository.currentUser.value
 
-        val username = currentUser?.userName ?: "익명"
+
+
 
         val jsonBody = JSONObject().apply {
             put("title", title)
