@@ -13,7 +13,6 @@ import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.*
 import android.util.Log
-import com.example.compose.data.User
 
 object PostRepository {
     // 게시글 목록
@@ -192,32 +191,5 @@ object PostRepository {
         currentPosts.add(0, newPost)
         _posts.value = currentPosts
     }
-
-    // 게시글 상세 조회 API 요청 - ApiServiceCommon 활용
-    private suspend fun getPostDetailFromApi(postId: String): ApiResult<JSONObject> = withContext(Dispatchers.IO) {
-        val url = "${ApiConstants.POSTS_URL}/$postId"
-        return@withContext ApiServiceCommon.getRequest(url)
-    }
-
-    // 게시글 수정 API 요청 - ApiServiceCommon 활용
-    private suspend fun updatePostApi(postId: String, title: String, content: String, category: String): ApiResult<JSONObject> = withContext(Dispatchers.IO) {
-        val jsonBody = JSONObject().apply {
-            put("title", title)
-            put("comment", content)
-            put("category", category)
-        }
-
-        val url = "${ApiConstants.POSTS_URL}/$postId"
-        // PUT 요청은 아직 ApiServiceCommon에 구현되어 있지 않아 POST로 대체
-        return@withContext ApiServiceCommon.postRequest(url, jsonBody)
-    }
-
-    // 게시글 삭제 API 요청 - ApiServiceCommon 활용
-    private suspend fun deletePostApi(postId: String): ApiResult<JSONObject> = withContext(Dispatchers.IO) {
-        val url = "${ApiConstants.POSTS_URL}/$postId"
-        // DELETE 요청은 아직 ApiServiceCommon에 구현되어 있지 않아 POST로 대체
-        return@withContext ApiServiceCommon.postRequest(url, JSONObject())
-    }
-
 
     }

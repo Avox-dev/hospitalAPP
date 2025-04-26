@@ -1,7 +1,7 @@
 // LoginViewModel.kt
 package com.example.compose.viewmodel
 
-import android.content.Context
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -15,8 +15,7 @@ import com.example.compose.data.User
 import com.example.compose.data.UserRepository
 import com.example.compose.data.ApiResult
 import com.example.compose.data.UserService
-import android.content.SharedPreferences
-import org.json.JSONObject
+
 
 class LoginViewModel : ViewModel() {
     private val userRepository = UserRepository.getInstance()
