@@ -68,10 +68,13 @@ class UserService {
     }
 
     /**
-     * 사용자 정보 업데이트 API 요청
-     * @param userId 사용자 아이디
-     * @param updateData 업데이트할 데이터
-     * @return 업데이트 처리 결과
+     * ✅ 사용자 정보 업데이트 API 요청
+     * @param email 이메일
+     * @param phone 전화번호
+     * @param birthdate 생년월일
+     * @param address 주소
+     * @param address_detail 상세 주소
+     * @return 업데이트 요청 결과 (ApiResult)
      */
     suspend fun updateUserInfo(
         email: String,
@@ -124,10 +127,9 @@ class UserService {
     }
 
     /**
-     * 비밀번호 변경 API 요청
-     * @param current_password 기존 비밀번호
-     * @param new_password 새 비밀번호
-     * @return 로그인 처리 결과
+     * ✅ 회원 탈퇴 API 요청
+     * @param password 사용자 비밀번호 (확인용)
+     * @return 탈퇴 요청 결과 (ApiResult)
      */
     suspend fun withdrawAccount(
         password: String

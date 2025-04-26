@@ -15,23 +15,27 @@ import java.util.*
 import android.util.Log
 import com.example.compose.data.User
 
+// ✅ 게시글 및 공지사항 관리 리포지토리 (API 연동)
 object PostRepository {
-    // 게시글 목록
+    // 게시글 목록 상태 저장
     private val _posts = MutableStateFlow<List<Post>>(emptyList())
     val posts: StateFlow<List<Post>> = _posts
 
-    // 공지사항 목록
+    // 공지사항 목록 상태 저장
     private val _notices = MutableStateFlow<List<Notice>>(emptyList())
     val notices: StateFlow<List<Notice>> = _notices
 
+    // API 통신을 위한 CoroutineScope
     private val coroutineScope = CoroutineScope(Dispatchers.IO)
 
     init {
-
+        // 앱 시작 시 게시글 불러오기
         fetchPosts()
     }
 
-    // API에서 게시글 목록 가져오기
+    /**
+     * ✅ 서버에서 게시글 목록 불러오기
+     */
     fun fetchPosts() {
         coroutineScope.launch {
             try {
@@ -66,13 +70,17 @@ object PostRepository {
         }
     }
 
-    // API 요청 함수 (GET) - ApiServiceCommon 활용
+    /**
+     * ✅ 게시글 목록 API 요청 (GET)
+     */
     private suspend fun getPostsFromApi(page: Int = 1, perPage: Int = 20): ApiResult<JSONObject> = withContext(Dispatchers.IO) {
         val url = "${ApiConstants.POSTS_URL}?page=$page&per_page=$perPage"
         return@withContext ApiServiceCommon.getRequest(url)
     }
 
-    // JSON에서 Post 객체로 파싱
+    /**
+     * ✅ JSON 객체를 Post 객체로 변환
+     */
     private fun parsePostFromJson(postJson: JSONObject): Post {
         val id = postJson.optString("id", "")
         val title = postJson.optString("title", "")
@@ -82,7 +90,7 @@ object PostRepository {
         val likes = postJson.optInt("likes", 0)
         val comments = postJson.optInt("comments", 0)
 
-        // 시간 변환
+        // 작성 시간 가공
         val timeAgo = calculateTimeAgo(createdAt)
 
         return Post(
@@ -96,6 +104,9 @@ object PostRepository {
         )
     }
 
+    /**
+     * ✅ 작성 시각을 '방금 전', 'n시간 전' 형식으로 변환
+     */
     fun calculateTimeAgo(createdAt: String): String {
         return try {
             val formatter = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault())
@@ -121,7 +132,9 @@ object PostRepository {
     }
 
 
-    // 게시글 추가 메서드 - API 연동
+    /**
+     * ✅ 게시글 추가 (API 연동)
+     */
     fun addPost(title: String, content: String, writer: String) {
         coroutineScope.launch {
             try {
@@ -132,15 +145,13 @@ object PostRepository {
                     val status = jsonResponse.optString("status")
 
                     if (status == "success") {
-                        // 새 게시글 추가 후 전체 목록 다시 로드
+                        // 성공 시, 목록 다시 불러오기
                         fetchPosts()
                     } else {
-                        // API 요청은 성공했지만 서버에서 오류 반환
                         println("게시글 추가 실패: ${jsonResponse.optString("message", "알 수 없는 오류")}")
                         addPostLocally(title, content, writer)
                     }
                 } else if (result is ApiResult.Error) {
-                    // API 요청 자체가 실패
                     println("게시글 추가 요청 실패: ${result.message}")
                     addPostLocally(title, content, writer)
                 }
@@ -151,26 +162,27 @@ object PostRepository {
         }
     }
 
-    // 게시글 생성 API 요청 - ApiServiceCommon 활용
-    // PostRepository.kt의 createPostApi 메서드 수정
+    /**
+     * ✅ 게시글 추가 API 요청 (POST)
+     */
     private suspend fun createPostApi(title: String, content: String, writer: String): ApiResult<JSONObject> = withContext(Dispatchers.IO) {
-        // UserRepository에서 현재 로그인한 사용자 정보 가져오기
         val userRepository = UserRepository.getInstance()
         val currentUser = userRepository.currentUser.value
 
-        val username = currentUser?.userName ?: "익명" // 로그인되지 않은 경우 "익명"으로 표시
+        val username = currentUser?.userName ?: "익명"
 
         val jsonBody = JSONObject().apply {
             put("title", title)
-            put("comment", content)  // API는 comment 필드 사용
-            put("username", writer) // 실제 현재 로그인한 사용자 이름 사용
+            put("comment", content)
+            put("username", writer)
         }
 
         return@withContext ApiServiceCommon.postRequest(ApiConstants.POSTS_URL, jsonBody)
     }
 
-    // API 호출 실패 시 로컬에 게시글 추가 (임시 방편)
-    // addPostLocally 메서드 수정
+    /**
+     * ✅ API 실패 시, 로컬에 임시로 게시글 추가
+     */
     private fun addPostLocally(title: String, content: String, writer: String) {
         val userRepository = UserRepository.getInstance()
         val currentUser = userRepository.currentUser.value
@@ -193,13 +205,17 @@ object PostRepository {
         _posts.value = currentPosts
     }
 
-    // 게시글 상세 조회 API 요청 - ApiServiceCommon 활용
+    /**
+     * ✅ 게시글 상세 조회 API 요청 (GET)
+     */
     private suspend fun getPostDetailFromApi(postId: String): ApiResult<JSONObject> = withContext(Dispatchers.IO) {
         val url = "${ApiConstants.POSTS_URL}/$postId"
         return@withContext ApiServiceCommon.getRequest(url)
     }
 
-    // 게시글 수정 API 요청 - ApiServiceCommon 활용
+    /**
+     * ✅ 게시글 수정 API 요청 (POST)
+     */
     private suspend fun updatePostApi(postId: String, title: String, content: String, category: String): ApiResult<JSONObject> = withContext(Dispatchers.IO) {
         val jsonBody = JSONObject().apply {
             put("title", title)
@@ -208,14 +224,14 @@ object PostRepository {
         }
 
         val url = "${ApiConstants.POSTS_URL}/$postId"
-        // PUT 요청은 아직 ApiServiceCommon에 구현되어 있지 않아 POST로 대체
         return@withContext ApiServiceCommon.postRequest(url, jsonBody)
     }
 
-    // 게시글 삭제 API 요청 - ApiServiceCommon 활용
+    /**
+     * ✅ 게시글 삭제 API 요청 (POST)
+     */
     private suspend fun deletePostApi(postId: String): ApiResult<JSONObject> = withContext(Dispatchers.IO) {
         val url = "${ApiConstants.POSTS_URL}/$postId"
-        // DELETE 요청은 아직 ApiServiceCommon에 구현되어 있지 않아 POST로 대체
         return@withContext ApiServiceCommon.postRequest(url, JSONObject())
     }
 
