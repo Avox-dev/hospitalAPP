@@ -13,6 +13,7 @@ import org.json.JSONObject
 import java.text.SimpleDateFormat
 import java.util.*
 import android.util.Log
+import org.json.JSONArray
 
 // ✅ 게시글 및 공지사항 관리 리포지토리 (API 연동)
 object PostRepository {
@@ -26,62 +27,100 @@ object PostRepository {
 
     // API 통신을 위한 CoroutineScope
     private val coroutineScope = CoroutineScope(Dispatchers.IO)
-
+    private val postService = PostService()
     init {
         // 앱 시작 시 게시글 불러오기
         fetchPosts()
     }
 
+
     /**
-     * ✅ 서버에서 게시글 목록 불러오기
+     * ✅ 서버에서 게시글 목록 불러오기 (QnA 데이터)
      */
     fun fetchPosts() {
-        coroutineScope.launch {
+        coroutineScope.launch(Dispatchers.IO) {
             try {
-                val result = getPostsFromApi()
+                Log.d("PostRepository", "QnA 데이터 요청 시작")
 
-                if (result is ApiResult.Success) {
-                    val jsonResponse = result.data
-                    val status = jsonResponse.optString("status")
+                when (val result = postService.getPosts()) {
+                    is ApiResult.Success -> {
+                        val jsonArray = result.data
+                        Log.d("PostRepository", "QnA 데이터 수신: ${jsonArray.length()}개")
 
-                    if (status == "success") {
-                        val dataObject = jsonResponse.optJSONObject("data")
-                        if (dataObject != null) {
-                            val itemsArray = dataObject.optJSONArray("items")
-                            if (itemsArray != null) {
-                                val postsList = mutableListOf<Post>()
+                        if (jsonArray.length() > 0) {
+                            Log.d("PostRepository", "첫 번째 항목: ${jsonArray.getJSONObject(0)}")
+                        }
 
-                                for (i in 0 until itemsArray.length()) {
-                                    val postJson = itemsArray.getJSONObject(i)
-                                    val post = parsePostFromJson(postJson)
-                                    postsList.add(post)
-                                }
-
-                                _posts.value = postsList
-                                return@launch
+                        val postList = mutableListOf<Post>()
+                        for (i in 0 until jsonArray.length()) {
+                            try {
+                                val item = jsonArray.getJSONObject(i)
+                                val post = Post(
+                                    id = item.getInt("id"),
+                                    title = item.optString("title", ""),
+                                    content = item.optString("comment", ""), // comment 필드 사용
+                                    writer = item.optString("writer", "writer"),
+                                    timeAgo = calculateTimeAgo(item.optString("created_at", "")),
+                                    likes = item.optInt("likes", 0),
+                                    comments = item.optInt("comments", 0)
+                                )
+                                postList.add(post)
+                            } catch (e: Exception) {
+                                Log.e("PostRepository", "QnA 항목 파싱 오류: ${e.message}")
+                                continue
                             }
                         }
+
+                        Log.d("PostRepository", "QnA 파싱 완료: ${postList.size}개")
+                        _posts.value = postList
+                    }
+
+                    is ApiResult.Error -> {
+                        Log.e("PostRepository", "QnA 요청 실패: ${result.message}")
                     }
                 }
             } catch (e: Exception) {
-                println("API 요청 실패: ${e.message}")
+                Log.e("PostRepository", "QnA 처리 중 예외 발생: ${e.message}")
             }
         }
     }
 
     /**
-     * ✅ 게시글 목록 API 요청 (GET)
+     * ✅ 게시글 목록 API 요청 (QnA용)
      */
-    private suspend fun getPostsFromApi(page: Int = 1, perPage: Int = 20): ApiResult<JSONObject> = withContext(Dispatchers.IO) {
-        val url = "${ApiConstants.POSTS_URL}?page=$page&per_page=$perPage"
-        return@withContext ApiServiceCommon.getRequest(url)
+    private suspend fun getPostsFromApi(page: Int = 1, perPage: Int = 20): ApiResult<JSONArray> = withContext(Dispatchers.IO) {
+        try {
+            val url = "${ApiConstants.POSTS_URL}?page=$page&per_page=$perPage"
+            val result = ApiServiceCommon.getRequest(url)
+
+            return@withContext when (result) {
+                is ApiResult.Success -> {
+                    try {
+                        val jsonObject = result.data as? JSONObject
+                        val dataObject = jsonObject?.optJSONObject("data")
+                        val dataArray = dataObject?.optJSONArray("items") ?: JSONArray()
+                        ApiResult.Success(dataArray)
+                    } catch (e: Exception) {
+                        Log.e("PostService", "QnA JSON 파싱 오류: ${e.message}")
+                        ApiResult.Error(message = "QnA 데이터 파싱 오류: ${e.message}")
+                    }
+                }
+
+                is ApiResult.Error -> {
+                    ApiResult.Error(message = result.message)
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("PostService", "QnA 요청 처리 중 예외 발생: ${e.message}")
+            ApiResult.Error(message = "요청 처리 중 오류가 발생했습니다: ${e.message}")
+        }
     }
 
     /**
      * ✅ JSON 객체를 Post 객체로 변환
      */
     private fun parsePostFromJson(postJson: JSONObject): Post {
-        val id = postJson.optString("id", "")
+        val id = postJson.getInt("id")
         val title = postJson.optString("title", "")
         val content = postJson.optString("comment", "")  // API는 comment 필드 사용
         val writer = postJson.optString("writer","writer")
@@ -187,7 +226,7 @@ object PostRepository {
 
         val username = currentUser?.userName ?: "익명" // 로그인되지 않은 경우 "익명"으로 표시
 
-        val newId = System.currentTimeMillis().toString()
+        val newId = System.currentTimeMillis().toInt()
         val newPost = Post(
             id = newId,
             title = title,
@@ -203,4 +242,34 @@ object PostRepository {
         _posts.value = currentPosts
     }
 
+}
+
+
+class PostService {
+    suspend fun getPosts(): ApiResult<JSONArray> = withContext(Dispatchers.IO) {
+        try {
+            val url = ApiConstants.POSTS_URL
+            val result = ApiServiceCommon.getRequest(url)
+
+            return@withContext when (result) {
+                is ApiResult.Success -> {
+                    try {
+                        val jsonObject = result.data as? JSONObject
+                        val dataObject = jsonObject?.optJSONObject("data")
+                        val dataArray = dataObject?.optJSONArray("items") ?: JSONArray()
+                        ApiResult.Success(dataArray)
+                    } catch (e: Exception) {
+                        Log.e("PostService", "QnA JSON 파싱 오류: ${e.message}")
+                        ApiResult.Error(message = "QnA 데이터 파싱 오류: ${e.message}")
+                    }
+                }
+                is ApiResult.Error -> {
+                    ApiResult.Error(message = result.message)
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("PostService", "QnA 요청 처리 중 예외 발생: ${e.message}")
+            ApiResult.Error(message = "요청 처리 중 오류가 발생했습니다: ${e.message}")
+        }
     }
+}

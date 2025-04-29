@@ -82,7 +82,7 @@ class CommunityViewModel : ViewModel() {
     }
 
     data class Post(
-        val id: String,
+        val id: Int,
         val title: String,
         val content: String,
         val writer: String,

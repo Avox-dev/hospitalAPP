@@ -77,7 +77,22 @@ fun HomeScreen(
                 .padding(dimens.paddingLarge.dp)
         ) {
             // 공지 및 qna 배너
-            PneumoniaBanner(notices = notices, qnas = qnas)
+            PneumoniaBanner(
+                notices = notices,
+                qnas = qnas,
+                onItemClick = { bannerItem ->
+                    when (bannerItem.type) {
+                        BannerType.NOTICE -> {
+                            // 공지사항 상세 페이지로 이동
+                            navigateToScreen(Screen.NoticeDetail.createRoute(bannerItem.id))
+                        }
+                        BannerType.QNA -> {
+                            // QnA 상세 페이지로 이동
+                            navigateToScreen(Screen.PostDetail.createRoute(bannerItem.id))
+                        }
+                    }
+                }
+            )
 
             Spacer(modifier = Modifier.height(dimens.paddingLarge.dp))
 
@@ -267,15 +282,30 @@ fun TopAppBar(location: String) {
 @Composable
 fun PneumoniaBanner(
     notices: List<CommunityViewModel.Notice>,
-    qnas: List<CommunityViewModel.Post> // 🔥 QnA도 같이 받기
+    qnas: List<CommunityViewModel.Post>,
+    onItemClick: (BannerItem) -> Unit // 🔥 클릭 콜백 추가
 ) {
     val dimens = appDimens()
 
     // 공지사항 2개 + QnA 2개를 합친 리스트 생성
-    val noticeItems = notices.take(2).map { BannerItem(it.title, it.comment) }
-    val qnaItems = qnas.take(2).map { BannerItem(it.title, it.content) }
+    val noticeItems = notices.take(2).map {
+        BannerItem(
+            id = it.id,
+            title = it.title,
+            comment = it.comment,
+            type = BannerType.NOTICE
+        )
+    }
+    val qnaItems = qnas.take(2).map {
+        BannerItem(
+            id = it.id,
+            title = it.title,
+            comment = it.content,
+            type = BannerType.QNA
+        )
+    }
 
-    val bannerItems = noticeItems + qnaItems // 🔥 합치기
+    val bannerItems = noticeItems + qnaItems
 
     if (bannerItems.isEmpty()) return
 
@@ -284,7 +314,11 @@ fun PneumoniaBanner(
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(dimens.bannerHeight.dp),
+            .height(dimens.bannerHeight.dp)
+            .clickable {
+                val currentItem = bannerItems[pagerState.currentPage]
+                onItemClick(currentItem) // 🔥 클릭 시 현재 아이템 넘기기
+            },
         shape = RoundedCornerShape(dimens.cornerRadius.dp),
         elevation = CardDefaults.cardElevation(0.dp)
     ) {
@@ -304,7 +338,6 @@ fun PneumoniaBanner(
                 Column(
                     modifier = Modifier.align(Alignment.TopStart)
                 ) {
-                    // 🔥 제목 부분
                     Text(
                         text = currentItem.title,
                         fontSize = 22.sp,
@@ -322,7 +355,6 @@ fun PneumoniaBanner(
 
                     Spacer(modifier = Modifier.height(dimens.paddingMedium.dp))
 
-                    // 🔥 내용 부분
                     Text(
                         text = currentItem.comment.take(30) + "...",
                         fontSize = 14.sp,
@@ -331,7 +363,6 @@ fun PneumoniaBanner(
                 }
             }
 
-            // 🔥 현재 인덱스 표시
             Text(
                 text = "${pagerState.currentPage + 1}/${pagerState.pageCount}",
                 fontSize = 12.sp,
@@ -344,14 +375,16 @@ fun PneumoniaBanner(
         }
     }
 }
-
-/**
- * ✅ 배너에 사용할 통합 데이터 클래스
- */
 data class BannerItem(
+    val id: Int,
     val title: String,
-    val comment: String
+    val comment: String,
+    val type: BannerType // 🔥 추가
 )
+
+enum class BannerType {
+    NOTICE, QNA
+}
 
 @Composable
 fun CategoryButton(

@@ -48,7 +48,7 @@ sealed class Screen(val route: String) {
         fun createRoute(noticeId: Int) = "notice_detail/$noticeId"
     }
     object PostDetail : Screen("post_detail/{postId}") {
-        fun createRoute(postId: String) = "post_detail/$postId"
+        fun createRoute(postId: Int) = "post_detail/$postId"
     }
     object ChangePassword : Screen("change_password")
     object WithdrawAccount : Screen("withdraw_account")
@@ -220,9 +220,9 @@ fun AppNavigation(
         }
         composable(
             route = "post_detail/{postId}",
-            arguments = listOf(navArgument("postId") { type = NavType.StringType })
+            arguments = listOf(navArgument("postId") { type = NavType.IntType })
         ) { backStackEntry ->
-            val postId = backStackEntry.arguments?.getString("postId") ?: ""
+            val postId = backStackEntry.arguments?.getInt("postId") ?: 0
             val viewModel: CommunityViewModel = viewModel()
 
             val postList: List<CommunityViewModel.Post> by viewModel.posts.collectAsState()
