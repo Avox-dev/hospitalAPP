@@ -3,7 +3,7 @@ package com.example.compose.data
 
 object ApiConstants {
     // 기본 API URL
-    const val BASE_URL = "http://192.168.219.131:5002/api"
+    const val BASE_URL = "http://192.168.219.75:5002/api"
 
     // 회원 관련 API
     const val REGISTER_URL = "$BASE_URL/users/register"

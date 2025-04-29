@@ -35,6 +35,10 @@ import com.example.compose.navigation.Screen
 import com.example.compose.ui.components.*
 import com.example.compose.ui.theme.*
 import com.example.compose.viewmodel.HomeViewModel
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import com.google.accompanist.pager.*
+import com.example.compose.viewmodel.CommunityViewModel
 
 @Composable
 fun HomeScreen(
@@ -61,6 +65,10 @@ fun HomeScreen(
             modifier = Modifier.padding(horizontal = dimens.paddingLarge.dp)
         )
 
+        val viewModel: CommunityViewModel = viewModel()
+        val notices by viewModel.notices.collectAsState()
+        val qnas by viewModel.posts.collectAsState()
+
         // 스크롤 영역
         Column(
             modifier = Modifier
@@ -68,8 +76,8 @@ fun HomeScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(dimens.paddingLarge.dp)
         ) {
-            // 폐렴 배너
-            PneumoniaBanner()
+            // 공지 및 qna 배너
+            PneumoniaBanner(notices = notices, qnas = qnas)
 
             Spacer(modifier = Modifier.height(dimens.paddingLarge.dp))
 
@@ -254,15 +262,29 @@ fun TopAppBar(location: String) {
     }
 }
 
+
+@OptIn(ExperimentalPagerApi::class)
 @Composable
-fun PneumoniaBanner() {
+fun PneumoniaBanner(
+    notices: List<CommunityViewModel.Notice>,
+    qnas: List<CommunityViewModel.Post> // 🔥 QnA도 같이 받기
+) {
     val dimens = appDimens()
+
+    // 공지사항 2개 + QnA 2개를 합친 리스트 생성
+    val noticeItems = notices.take(2).map { BannerItem(it.title, it.comment) }
+    val qnaItems = qnas.take(2).map { BannerItem(it.title, it.content) }
+
+    val bannerItems = noticeItems + qnaItems // 🔥 합치기
+
+    if (bannerItems.isEmpty()) return
+
+    val pagerState = rememberPagerState()
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(dimens.bannerHeight.dp)
-            .clickable { /* 상세 화면으로 이동 */ },
+            .height(dimens.bannerHeight.dp),
         shape = RoundedCornerShape(dimens.cornerRadius.dp),
         elevation = CardDefaults.cardElevation(0.dp)
     ) {
@@ -272,34 +294,46 @@ fun PneumoniaBanner() {
                 .background(Purple80)
                 .padding(dimens.paddingLarge.dp)
         ) {
-            Column(
-                modifier = Modifier.align(Alignment.TopStart)
-            ) {
-                Text(
-                    text = "폐렴은 꼭 입원",
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
+            HorizontalPager(
+                count = bannerItems.size,
+                state = pagerState,
+                modifier = Modifier.fillMaxSize()
+            ) { page ->
+                val currentItem = bannerItems[page]
 
-                Text(
-                    text = "해야 하는 걸까요?",
-                    fontSize = 22.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color.White
-                )
+                Column(
+                    modifier = Modifier.align(Alignment.TopStart)
+                ) {
+                    // 🔥 제목 부분
+                    Text(
+                        text = currentItem.title,
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White,
+                        maxLines = 1
+                    )
 
-                Spacer(modifier = Modifier.height(dimens.paddingMedium.dp))
+                    Text(
+                        text = " ",
+                        fontSize = 22.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
 
-                Text(
-                    text = "의사쌤이 알려드려요",
-                    fontSize = 14.sp,
-                    color = Color(0xEEFFFFFF)
-                )
+                    Spacer(modifier = Modifier.height(dimens.paddingMedium.dp))
+
+                    // 🔥 내용 부분
+                    Text(
+                        text = currentItem.comment.take(30) + "...",
+                        fontSize = 14.sp,
+                        color = Color(0xEEFFFFFF)
+                    )
+                }
             }
 
+            // 🔥 현재 인덱스 표시
             Text(
-                text = "1/5",
+                text = "${pagerState.currentPage + 1}/${pagerState.pageCount}",
                 fontSize = 12.sp,
                 color = Color.White,
                 modifier = Modifier
@@ -310,6 +344,14 @@ fun PneumoniaBanner() {
         }
     }
 }
+
+/**
+ * ✅ 배너에 사용할 통합 데이터 클래스
+ */
+data class BannerItem(
+    val title: String,
+    val comment: String
+)
 
 @Composable
 fun CategoryButton(
