@@ -35,7 +35,6 @@ import com.example.compose.navigation.Screen
 import com.example.compose.ui.components.*
 import com.example.compose.ui.theme.*
 import com.example.compose.viewmodel.HomeViewModel
-import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import com.google.accompanist.pager.*
 import com.example.compose.viewmodel.CommunityViewModel

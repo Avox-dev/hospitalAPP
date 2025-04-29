@@ -1,4 +1,3 @@
-// SharedPreferencesManager.kt
 package com.example.compose.util
 
 import android.content.Context

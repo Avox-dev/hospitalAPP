@@ -27,7 +27,7 @@ import com.example.compose.viewmodel.CommunityViewModel
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.material3.Text
-import com.example.compose.WithdrawAccountScreen
+import com.example.compose.ui.screens.WithdrawAccountScreen
 import com.example.compose.ui.screens.ChangePasswordScreen
 
 sealed class Screen(val route: String) {
