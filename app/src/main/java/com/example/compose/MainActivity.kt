@@ -16,12 +16,17 @@ import com.example.compose.navigation.AppNavigation
 import com.example.compose.ui.theme.HospitalAppTheme
 import com.kakao.sdk.common.util.Utility
 import com.kakao.vectormap.KakaoMapSdk
+import android.widget.Toast
 
 // ✅ 앱의 Entry Point - MainActivity
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        if (RootCheck.isDeviceRootedNative()) {
+            Toast.makeText(this, "루팅된 기기입니다. 앱을 종료합니다.", Toast.LENGTH_LONG).show()
+            finish()
+        }
         // ✅ 카카오 키 해시 출력 (로그인, 지도 연동용)
         var keyHash = Utility.getKeyHash(this)
         Log.d("KeyHash", "KeyHash: $keyHash")
