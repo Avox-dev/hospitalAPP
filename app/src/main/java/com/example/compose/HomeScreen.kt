@@ -77,20 +77,35 @@ fun HomeScreen(
                 .padding(dimens.paddingLarge.dp)
         ) {
             // 공지 및 qna 배너
-            PneumoniaBanner(
+            Text(
+                text = "공지사항",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            NoticeBanner(
                 notices = notices,
+                onItemClick = { bannerItem ->
+                    // 공지사항 클릭 처리
+                    navigateToScreen(Screen.NoticeDetail.createRoute(bannerItem.id))
+                }
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            Text(
+                text = "QnA",
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.Black,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+            QnaBanner(
                 qnas = qnas,
                 onItemClick = { bannerItem ->
-                    when (bannerItem.type) {
-                        BannerType.NOTICE -> {
-                            // 공지사항 상세 페이지로 이동
-                            navigateToScreen(Screen.NoticeDetail.createRoute(bannerItem.id))
-                        }
-                        BannerType.QNA -> {
-                            // QnA 상세 페이지로 이동
-                            navigateToScreen(Screen.PostDetail.createRoute(bannerItem.id))
-                        }
-                    }
+                    // QnA 클릭 처리
+                    navigateToScreen(Screen.PostDetail.createRoute(bannerItem.id))
                 }
             )
 
@@ -280,15 +295,15 @@ fun TopAppBar(location: String) {
 
 @OptIn(ExperimentalPagerApi::class)
 @Composable
-fun PneumoniaBanner(
+fun NoticeBanner(
     notices: List<CommunityViewModel.Notice>,
-    qnas: List<CommunityViewModel.Post>,
-    onItemClick: (BannerItem) -> Unit // 🔥 클릭 콜백 추가
+    onItemClick: (BannerItem) -> Unit
 ) {
     val dimens = appDimens()
 
-    // 공지사항 2개 + QnA 2개를 합친 리스트 생성
-    val noticeItems = notices.take(2).map {
+    if (notices.isEmpty()) return
+
+    val noticeItems = notices.take(5).map {
         BannerItem(
             id = it.id,
             title = it.title,
@@ -296,18 +311,6 @@ fun PneumoniaBanner(
             type = BannerType.NOTICE
         )
     }
-    val qnaItems = qnas.take(2).map {
-        BannerItem(
-            id = it.id,
-            title = it.title,
-            comment = it.content,
-            type = BannerType.QNA
-        )
-    }
-
-    val bannerItems = noticeItems + qnaItems
-
-    if (bannerItems.isEmpty()) return
 
     val pagerState = rememberPagerState()
 
@@ -316,8 +319,8 @@ fun PneumoniaBanner(
             .fillMaxWidth()
             .height(dimens.bannerHeight.dp)
             .clickable {
-                val currentItem = bannerItems[pagerState.currentPage]
-                onItemClick(currentItem) // 🔥 클릭 시 현재 아이템 넘기기
+                val currentItem = noticeItems[pagerState.currentPage]
+                onItemClick(currentItem)
             },
         shape = RoundedCornerShape(dimens.cornerRadius.dp),
         elevation = CardDefaults.cardElevation(0.dp)
@@ -329,11 +332,11 @@ fun PneumoniaBanner(
                 .padding(dimens.paddingLarge.dp)
         ) {
             HorizontalPager(
-                count = bannerItems.size,
+                count = noticeItems.size,
                 state = pagerState,
                 modifier = Modifier.fillMaxSize()
             ) { page ->
-                val currentItem = bannerItems[page]
+                val currentItem = noticeItems[page]
 
                 Column(
                     modifier = Modifier.align(Alignment.TopStart)
@@ -346,11 +349,82 @@ fun PneumoniaBanner(
                         maxLines = 1
                     )
 
+                    Spacer(modifier = Modifier.height(dimens.paddingMedium.dp))
+
                     Text(
-                        text = " ",
+                        text = currentItem.comment.take(30) + "...",
+                        fontSize = 14.sp,
+                        color = Color(0xEEFFFFFF)
+                    )
+                }
+            }
+
+            Text(
+                text = "${pagerState.currentPage + 1}/${pagerState.pageCount}",
+                fontSize = 12.sp,
+                color = Color.White,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .background(Color(0x80000000))
+                    .padding(horizontal = dimens.paddingMedium.dp, vertical = 4.dp)
+            )
+        }
+    }
+}
+@OptIn(ExperimentalPagerApi::class)
+@Composable
+fun QnaBanner(
+    qnas: List<CommunityViewModel.Post>,
+    onItemClick: (BannerItem) -> Unit
+) {
+    val dimens = appDimens()
+
+    if (qnas.isEmpty()) return
+
+    val qnaItems = qnas.take(5).map {
+        BannerItem(
+            id = it.id,
+            title = it.title,
+            comment = it.content,
+            type = BannerType.QNA
+        )
+    }
+
+    val pagerState = rememberPagerState()
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(dimens.bannerHeight.dp)
+            .clickable {
+                val currentItem = qnaItems[pagerState.currentPage]
+                onItemClick(currentItem)
+            },
+        shape = RoundedCornerShape(dimens.cornerRadius.dp),
+        elevation = CardDefaults.cardElevation(0.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(PediatricsDept)
+                .padding(dimens.paddingLarge.dp)
+        ) {
+            HorizontalPager(
+                count = qnaItems.size,
+                state = pagerState,
+                modifier = Modifier.fillMaxSize()
+            ) { page ->
+                val currentItem = qnaItems[page]
+
+                Column(
+                    modifier = Modifier.align(Alignment.TopStart)
+                ) {
+                    Text(
+                        text = currentItem.title,
                         fontSize = 22.sp,
                         fontWeight = FontWeight.Bold,
-                        color = Color.White
+                        color = Color.White,
+                        maxLines = 1
                     )
 
                     Spacer(modifier = Modifier.height(dimens.paddingMedium.dp))
