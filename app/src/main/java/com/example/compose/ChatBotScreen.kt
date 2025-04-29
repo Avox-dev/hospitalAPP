@@ -4,6 +4,7 @@ package com.example.compose.ui.screens
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
@@ -40,6 +41,12 @@ fun ChatBotScreen(
     val focusManager = LocalFocusManager.current
     val scrollState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
+
+    // 빠른 명령어 리스트
+    val quickCommands = listOf(
+        "/예약조회",
+        "/비대면진료"
+    )
 
     // 새 메시지가 추가되면 스크롤을 맨 아래로
     LaunchedEffect(messages.size) {
@@ -102,6 +109,14 @@ fun ChatBotScreen(
                 }
             }
 
+            // 빠른 명령어 스크롤 영역
+            QuickCommandsSection(
+                commands = quickCommands,
+                onCommandClick = { command ->
+                    viewModel.sendMessage(command)
+                }
+            )
+
             // 입력 영역
             MessageInputField(
                 value = messageText,
@@ -116,6 +131,60 @@ fun ChatBotScreen(
                 isLoading = isLoading
             )
         }
+    }
+}
+
+@Composable
+fun QuickCommandsSection(
+    commands: List<String>,
+    onCommandClick: (String) -> Unit
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(Color(0xFFF5F5F5))
+            .padding(vertical = 8.dp)
+    ) {
+        Text(
+            text = "자주 쓰는 명령어",
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp),
+            fontSize = 12.sp,
+            color = Color.Gray
+        )
+
+        LazyRow(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            items(commands) { command ->
+                CommandChip(
+                    text = command,
+                    onClick = { onCommandClick(command) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun CommandChip(
+    text: String,
+    onClick: () -> Unit
+) {
+    Surface(
+        onClick = onClick,
+        modifier = Modifier.padding(vertical = 4.dp),
+        shape = RoundedCornerShape(16.dp),
+        color = Color(0xFFEADDFF)
+    ) {
+        Text(
+            text = text,
+            modifier = Modifier.padding(horizontal = 12.dp, vertical = 8.dp),
+            fontSize = 14.sp,
+            color = Color(0xFF6650a4)
+        )
     }
 }
 
