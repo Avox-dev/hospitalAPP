@@ -2,7 +2,6 @@
 package com.example.compose.viewmodel
 
 import android.app.Application
-import android.util.Log
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,7 +19,6 @@ import com.example.compose.util.SharedPreferencesManager
 
 // ✅ 로그인 처리를 담당하는 ViewModel (Application 컨텍스트를 사용하기 위해 AndroidViewModel 상속)
 class LoginViewModel(application: Application) : AndroidViewModel(application) {
-    private val TAG = "LoginViewModel"
     private val userRepository = UserRepository.getInstance() // 유저 정보 저장소
     private val userService = UserService() // 로그인 API 호출용
     private val prefsManager = SharedPreferencesManager.getInstance(application) // SharedPreferences 관리자
@@ -39,48 +37,25 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
     private val _rememberMe = MutableStateFlow(prefsManager.isAutoLoginEnabled())
     val rememberMe: StateFlow<Boolean> = _rememberMe.asStateFlow()
 
-    // 자동 로그인 정보 존재 여부를 나타내는 StateFlow
-    private val _hasAutoLoginInfo = MutableStateFlow(checkHasAutoLoginInfo())
-    val hasAutoLoginInfo: StateFlow<Boolean> = _hasAutoLoginInfo.asStateFlow()
-
     init {
-        Log.d(TAG, "LoginViewModel 초기화")
-        // 여기서는, 로그인 함수를 직접 호출하지 않고 자동 로그인 정보만 확인
-        updateHasAutoLoginInfo()
+        // 앱 시작 시 자동 로그인 처리
+        checkAutoLogin()
     }
 
     /**
-     * 자동 로그인 정보가 있는지 확인하고 상태 업데이트
+     * 자동 로그인 상태 확인 및 처리
      */
-    private fun updateHasAutoLoginInfo() {
-        val hasInfo = checkHasAutoLoginInfo()
-        _hasAutoLoginInfo.value = hasInfo
-        Log.d(TAG, "자동 로그인 정보 존재 여부: $hasInfo")
-    }
+    private fun checkAutoLogin() {
+        viewModelScope.launch {
+            if (prefsManager.isAutoLoginEnabled()) {
+                val savedUserId = prefsManager.getUserId()
+                val savedPassword = prefsManager.getPassword()
 
-    /**
-     * 자동 로그인 정보가 있는지 확인
-     */
-    private fun checkHasAutoLoginInfo(): Boolean {
-        val isEnabled = prefsManager.isAutoLoginEnabled()
-        val hasUserId = prefsManager.getUserId().isNotEmpty()
-        val hasPassword = prefsManager.getPassword().isNotEmpty()
-        return isEnabled && hasUserId && hasPassword
-    }
-
-    /**
-     * 자동 로그인 실행 (외부에서 호출 가능)
-     */
-    fun executeAutoLogin(): Boolean {
-        if (_hasAutoLoginInfo.value) {
-            val savedUserId = prefsManager.getUserId()
-            val savedPassword = prefsManager.getPassword()
-            Log.d(TAG, "자동 로그인 실행 - ID: $savedUserId")
-            login(savedUserId, savedPassword, true)
-            return true
+                if (savedUserId.isNotEmpty() && savedPassword.isNotEmpty()) {
+                    login(savedUserId, savedPassword, true)
+                }
+            }
         }
-        Log.d(TAG, "자동 로그인 정보 없음")
-        return false
     }
 
     /**
@@ -110,7 +85,6 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
         isAutoLogin: Boolean = _rememberMe.value
     ) {
         viewModelScope.launch {
-            Log.d(TAG, "로그인 시도 - ID: $userId, 자동 로그인: $isAutoLogin")
             _loginState.value = LoginState.Loading // 로딩 상태 표시
 
             val maxRetries = 3 // 최대 재시도 횟수
@@ -147,10 +121,8 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
 
                                     // 자동 로그인 정보 저장
                                     if (isAutoLogin) {
-                                        Log.d(TAG, "자동 로그인 정보 저장 - ID: $userId")
                                         prefsManager.saveLoginInfo(userId, password, true)
                                     } else {
-                                        Log.d(TAG, "자동 로그인 비활성화로 정보 삭제")
                                         prefsManager.clearLoginInfo() // 자동 로그인 비활성화 시 정보 삭제
                                     }
 
@@ -171,10 +143,6 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
                                         )
                                     )
                                     userRepository.setSessionId(sessionId)
-
-                                    // 자동 로그인 정보 상태 업데이트
-                                    updateHasAutoLoginInfo()
-
                                     _loginState.value = LoginState.Success(message)
                                 } else {
                                     _loginState.value = LoginState.Error("사용자 정보를 불러오는데 실패했습니다.")
@@ -214,17 +182,11 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
      */
     fun logout() {
         viewModelScope.launch {
-            userRepository.logoutUser()
-
-            // 자동 로그인 설정 해제 및 정보 클리어
-            prefsManager.saveLoginInfo("", "", false)
-            prefsManager.clearAll()
-
-            // 로그아웃 후 상태 초기화
-            _userId.value = ""
-            _password.value = ""
+            // rememberMe 상태를 false로 업데이트
             _rememberMe.value = false
-            _hasAutoLoginInfo.value = false
+
+            // UserRepository의 logoutUser 호출
+            userRepository.logoutUser()
         }
     }
 

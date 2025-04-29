@@ -190,6 +190,38 @@ fun LoginPage(
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // SNS 로그인 옵션
+            Text(
+                text = "또는",
+                fontSize = 14.sp,
+                color = Color.Gray,
+                modifier = Modifier.padding(vertical = 8.dp)
+            )
+
+            Spacer(modifier = Modifier.height(16.dp))
+
+            // SNS 로그인 버튼 영역
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.SpaceEvenly
+            ) {
+                SocialLoginButton(
+                    text = "카카오",
+                    modifier = Modifier.weight(1f),
+                    buttonColor = Color(0xFFFEE500)
+                )
+
+                Spacer(modifier = Modifier.width(8.dp))
+
+                SocialLoginButton(
+                    text = "네이버",
+                    modifier = Modifier.weight(1f),
+                    buttonColor = Color(0xFF03C75A)
+                )
+            }
+
             Spacer(modifier = Modifier.height(24.dp))
 
             // 회원가입 안내 텍스트

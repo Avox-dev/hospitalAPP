@@ -81,38 +81,43 @@ class ChatBotViewModel : ViewModel() {
                     val responseData = result.data
                     Log.d("ChatAPI", "원본 응답: $responseData")
 
-                    if (responseData.has("status") && responseData.getString("status") == "success") {
-                        if (responseData.has("data")) {
-                            val dataObject = responseData.getJSONObject("data")
+                    try {
+                        if (responseData.has("status") && responseData.getString("status") == "success") {
+                            if (responseData.has("data")) {
+                                val dataObject = responseData.getJSONObject("data")
 
-                            if (dataObject.has("candidates") && dataObject.getJSONArray("candidates").length() > 0) {
-                                val candidate = dataObject.getJSONArray("candidates").getJSONObject(0)
+                                if (dataObject.has("candidates") && dataObject.getJSONArray("candidates").length() > 0) {
+                                    val candidate = dataObject.getJSONArray("candidates").getJSONObject(0)
 
-                                if (candidate.has("content")) {
-                                    val content = candidate.getJSONObject("content")
+                                    if (candidate.has("content")) {
+                                        val content = candidate.getJSONObject("content")
 
-                                    if (content.has("parts") && content.getJSONArray("parts").length() > 0) {
-                                        val part = content.getJSONArray("parts").getJSONObject(0)
+                                        if (content.has("parts") && content.getJSONArray("parts").length() > 0) {
+                                            val part = content.getJSONArray("parts").getJSONObject(0)
 
-                                        if (part.has("text")) {
-                                            part.getString("text")
-                                        } else {
-                                            "응답 구조에서 text 필드를 찾을 수 없습니다."
+                                            if (part.has("text")) {
+                                                return@withContext part.getString("text")
+                                            }
                                         }
-                                    } else {
-                                        "응답 구조에서 parts 배열을 찾을 수 없습니다."
                                     }
-                                } else {
-                                    "응답 구조에서 content 객체를 찾을 수 없습니다."
                                 }
-                            } else {
-                                "응답 구조에서 candidates 배열을 찾을 수 없습니다."
                             }
-                        } else {
-                            "응답에 data 필드가 없습니다."
                         }
-                    } else {
-                        "서버에서 오류 응답을 반환했습니다."
+
+                        // 여기까지 왔다면 파싱 과정에서 원하는 구조를 찾지 못한 것이므로
+                        // data 값을 반환
+                        if (responseData.has("data")) {
+                            return@withContext responseData.get("data").toString()
+                        } else {
+                            return@withContext responseData.toString()
+                        }
+                    } catch (e: Exception) {
+                        // 파싱 과정에서 예외가 발생하면 data 값 반환
+                        if (responseData.has("data")) {
+                            return@withContext responseData.get("data").toString()
+                        } else {
+                            return@withContext responseData.toString()
+                        }
                     }
                 }
                 is ApiResult.Error -> {

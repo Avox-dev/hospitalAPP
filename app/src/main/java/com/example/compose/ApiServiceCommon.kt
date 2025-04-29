@@ -10,6 +10,7 @@ import java.util.concurrent.TimeUnit
 import okhttp3.ConnectionPool
 import okhttp3.Protocol
 import java.io.IOException
+import java.net.Proxy
 
 sealed class ApiResult<out T> {
     data class Success<T>(val data: T) : ApiResult<T>()
@@ -25,6 +26,7 @@ object ApiServiceCommon {
         .retryOnConnectionFailure(true)
         .connectionPool(ConnectionPool(0, 1, TimeUnit.MINUTES))  // Keep-alive 연결 사용 안함
         .protocols(listOf(Protocol.HTTP_1_1))  // HTTP/1.1만 사용
+        .proxy(Proxy.NO_PROXY)  // 프록시 무시
         .build()
 
     suspend fun postRequest(url: String, jsonBody: JSONObject): ApiResult<JSONObject> {
@@ -86,7 +88,7 @@ object ApiServiceCommon {
                 }
 
                 // 응답 본문 안전하게 읽기
-                responseBody = response.body?.string() ?: "{}"
+                responseBody = response.body?.use { it.string() } ?: "{}"
                 Log.d("ApiServiceCommon", "응답 본문: $responseBody")
 
             } catch (e: IOException) {
