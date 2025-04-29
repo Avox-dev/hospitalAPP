@@ -2,7 +2,7 @@
 #include <unistd.h>
 
 JNIEXPORT jboolean JNICALL
-Java_com_example_compose_RootCheck_isDeviceRootedNative(JNIEnv *env, jobject thiz) {
+Java_com_android_hospitalAPP_RootCheck_isDeviceRootedNative(JNIEnv *env, jobject thiz) {
     const char *paths[] = {
             "/system/app/Superuser.apk",
             "/sbin/su",

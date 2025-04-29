@@ -21,6 +21,6 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "compose"
+rootProject.name = "hospitalAPP"
 include(":app")
  

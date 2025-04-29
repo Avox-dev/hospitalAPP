@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.compose"
+    namespace = "com.android.hospitalAPP"
     compileSdk = 36
 
     defaultConfig {
-        applicationId = "com.example.compose"
+        applicationId = "com.android.hospitalAPP"
         minSdk = 24
         targetSdk = 36
         versionCode = 1
