@@ -1,6 +1,7 @@
 // MyPageScreen.kt
 package com.example.compose.ui.screens
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -20,10 +21,12 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -31,22 +34,31 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.ViewModelProvider
 import com.example.compose.data.User
 import com.example.compose.navigation.Screen
 import com.example.compose.ui.components.*
 import com.example.compose.viewmodel.HomeViewModel
 import com.example.compose.data.UserRepository
 
+private const val TAG = "MyPageScreen"
+
 @Composable
 fun MyPageScreen(
     navigateToScreen: (String) -> Unit,
-    viewModel: HomeViewModel = viewModel()
+    viewModel: HomeViewModel = viewModel(factory = ViewModelProvider.AndroidViewModelFactory.getInstance(
+        LocalContext.current.applicationContext as android.app.Application
+    ))
 ) {
+    Log.d(TAG, "MyPageScreen 컴포넌트 렌더링")
 
     // UserRepository의 로그인 상태 감시
     val userRepository = UserRepository.getInstance()
     val currentUser by userRepository.currentUser.collectAsState()
-    
+
+    // 자동 로그인 정보 존재 여부 확인
+    val hasAutoLoginInfo by viewModel.hasAutoLoginInfo.collectAsState()
+
     Column(modifier = Modifier.fillMaxSize()) {
         // 상단 앱바에 사용자 정보 전달
         MyPageTopBar(
@@ -63,12 +75,23 @@ fun MyPageScreen(
                 .weight(1f)
                 .verticalScroll(rememberScrollState()),
             currentUser = currentUser,
-            onLoginClick = { navigateToScreen(Screen.Login.route) },
-            onLogoutClick = {
-                userRepository.logoutUser()
-                // 필요한 경우 추가 로그아웃 처리
+            hasAutoLoginInfo = hasAutoLoginInfo,
+            onLoginClick = {
+                // 자동 로그인 정보가 있으면 바로 로그인 실행
+                if (hasAutoLoginInfo) {
+                    Log.d(TAG, "자동 로그인 정보가 있어 로그인 함수 실행")
+                    viewModel.executeAutoLogin()
+                } else {
+                    // 자동 로그인 정보가 없으면 로그인 화면으로 이동
+                    Log.d(TAG, "자동 로그인 정보가 없어 로그인 화면으로 이동")
+                    navigateToScreen(Screen.Login.route)
+                }
             },
-            navigateToScreen = navigateToScreen // 추가: navigateToScreen 전달
+            onLogoutClick = {
+                Log.d(TAG, "로그아웃 버튼 클릭")
+                viewModel.logout()
+            },
+            navigateToScreen = navigateToScreen
         )
 
         // 하단 네비게이션
@@ -244,6 +267,7 @@ fun QuickMenuItem(
 fun MenuListSection(
     modifier: Modifier = Modifier,
     currentUser: User? = null,
+    hasAutoLoginInfo: Boolean = false,
     onLoginClick: () -> Unit = {},
     onLogoutClick: () -> Unit = {},
     navigateToScreen: (String) -> Unit = {}
@@ -262,7 +286,12 @@ fun MenuListSection(
                 ),
                 shape = RoundedCornerShape(8.dp)
             ) {
-                Text("로그인", fontSize = 16.sp, color = Color.Black)
+                // 자동 로그인 정보 유무에 따라 버튼 텍스트 변경
+                Text(
+                    text = if (hasAutoLoginInfo) "자동 로그인" else "로그인",
+                    fontSize = 16.sp,
+                    color = Color.Black
+                )
             }
         } else {
             // 사용자 정보 표시

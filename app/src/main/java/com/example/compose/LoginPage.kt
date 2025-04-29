@@ -11,6 +11,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -28,9 +29,10 @@ fun LoginPage(
     onNavigateToRegister: () -> Unit = {},
     viewModel: LoginViewModel = viewModel()
 ) {
-    var userId by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var rememberMe by remember { mutableStateOf(false) }
+    // ViewModel에서 상태 가져오기
+    val userId by viewModel.userId.collectAsState()
+    val password by viewModel.password.collectAsState()
+    val rememberMe by viewModel.rememberMe.collectAsState()
 
     // LoginState 감시
     val loginState by viewModel.loginState.collectAsState()
@@ -88,7 +90,7 @@ fun LoginPage(
             // 아이디/이메일 입력 필드
             OutlinedTextField(
                 value = userId,
-                onValueChange = { userId = it },
+                onValueChange = { viewModel.updateUserId(it) },
                 label = { Text("아이디 또는 이메일") },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -102,7 +104,7 @@ fun LoginPage(
             // 비밀번호 입력 필드
             OutlinedTextField(
                 value = password,
-                onValueChange = { password = it },
+                onValueChange = { viewModel.updatePassword(it) },
                 label = { Text("비밀번호") },
                 modifier = Modifier
                     .fillMaxWidth()
@@ -124,7 +126,7 @@ fun LoginPage(
             ) {
                 Checkbox(
                     checked = rememberMe,
-                    onCheckedChange = { rememberMe = it },
+                    onCheckedChange = { viewModel.updateRememberMe(it) },
                     colors = CheckboxDefaults.colors(
                         checkedColor = Color(0xFFD0BCFF)
                     )
@@ -156,7 +158,7 @@ fun LoginPage(
                 onClick = {
                     if (userId.isNotEmpty() && password.isNotEmpty()) {
                         // ViewModel의 login 함수 호출
-                        viewModel.login(userId, password)
+                        viewModel.login(userId, password, rememberMe)
                     }
                 },
                 modifier = Modifier
@@ -187,38 +189,6 @@ fun LoginPage(
             }
 
             Spacer(modifier = Modifier.height(16.dp))
-
-            // SNS 로그인 옵션
-            Text(
-                text = "또는",
-                fontSize = 14.sp,
-                color = Color.Gray,
-                modifier = Modifier.padding(vertical = 8.dp)
-            )
-
-            Spacer(modifier = Modifier.height(16.dp))
-
-            // SNS 로그인 버튼 영역
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
-                horizontalArrangement = Arrangement.SpaceEvenly
-            ) {
-                SocialLoginButton(
-                    text = "카카오",
-                    modifier = Modifier.weight(1f),
-                    buttonColor = Color(0xFFFEE500)
-                )
-
-                Spacer(modifier = Modifier.width(8.dp))
-
-                SocialLoginButton(
-                    text = "네이버",
-                    modifier = Modifier.weight(1f),
-                    buttonColor = Color(0xFF03C75A)
-                )
-            }
 
             Spacer(modifier = Modifier.height(24.dp))
 

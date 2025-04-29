@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.navigation.compose.rememberNavController
+import com.example.compose.data.UserRepository
 import com.example.compose.navigation.AppNavigation
 import com.example.compose.ui.theme.HospitalAppTheme
 import com.kakao.sdk.common.util.Utility
@@ -27,6 +28,8 @@ class MainActivity : ComponentActivity() {
 
         // ✅ 카카오 지도 SDK 초기화
         KakaoMapSdk.init(this,"bf105d2a0b3861e39aff0e8f49f7f0ce")
+        // UserRepository에 컨텍스트 설정
+        UserRepository.getInstance().setContext(applicationContext)
 
         // ✅ Compose 화면 설정
         setContent {
