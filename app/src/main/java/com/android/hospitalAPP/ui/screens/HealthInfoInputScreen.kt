@@ -21,12 +21,14 @@ import com.android.hospitalAPP.data.UserRepository
 import com.android.hospitalAPP.viewmodel.HealthInfoInputViewModel
 import android.widget.Toast
 import androidx.compose.ui.platform.LocalContext
+import com.android.hospitalAPP.navigation.Screen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HealthInfoInputScreen(
     viewModel: HealthInfoInputViewModel,
     onNavigateBack: () -> Unit,
+    navigateToScreen: (String) -> Unit,
     onNavigateHome: () -> Unit
 ) {
     val userRepository = UserRepository.getInstance()
@@ -49,6 +51,11 @@ fun HealthInfoInputScreen(
             else -> {}
         }
     }
+    LaunchedEffect(currentUser) {
+        if (currentUser == null) {
+            navigateToScreen(Screen.Login.route)
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -67,7 +74,7 @@ fun HealthInfoInputScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues),
-                contentAlignment = Alignment.Center
+                contentAlignment = Alignment.Center //Screen.Login.route
             ) {
                 Text("로그인이 필요한 서비스입니다.", fontSize = 18.sp)
             }

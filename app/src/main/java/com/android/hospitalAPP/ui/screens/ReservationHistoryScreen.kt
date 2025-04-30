@@ -22,6 +22,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.android.hospitalAPP.data.UserRepository
 import com.android.hospitalAPP.viewmodel.Reservation
 import com.android.hospitalAPP.navigation.Screen
 import com.android.hospitalAPP.viewmodel.ReservationHistoryViewModel
@@ -39,6 +40,13 @@ fun ReservationHistoryScreen(
 
     val uiState by viewModel.uiState.collectAsState()
 
+    val userRepository = UserRepository.getInstance()
+    val currentUser by userRepository.currentUser.collectAsState()
+    LaunchedEffect(currentUser) {
+        if (currentUser == null) {
+            navigateToScreen(Screen.Login.route)
+        }
+    }
     Scaffold(
         topBar = {
             TopAppBar(

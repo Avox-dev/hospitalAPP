@@ -38,11 +38,14 @@ import com.android.hospitalAPP.viewmodel.HomeViewModel
 import androidx.compose.runtime.*
 import com.google.accompanist.pager.*
 import com.android.hospitalAPP.viewmodel.CommunityViewModel
+import androidx.compose.foundation.Image
+import androidx.compose.ui.res.painterResource
+import com.android.hospitalAPP.R
 
 @Composable
 fun HomeScreen(
     navigateToScreen: (String) -> Unit,
-    viewModel: HomeViewModel = viewModel()
+    viewModel: HomeViewModel = viewModel(),
 ) {
 
 
@@ -53,7 +56,7 @@ fun HomeScreen(
 
     Column(modifier = Modifier.fillMaxSize()) {
         // 상단 앱바
-        TopAppBar(location = currentLocation.value)
+        TopAppBar(location = currentLocation.value, navigateToScreen)
 
         // 검색창 - 개선된 버전 사용
         EnhancedSearchBar(
@@ -120,11 +123,11 @@ fun HomeScreen(
                         .padding(end = 6.dp)
                 ) {
                     CategoryButton(
-                        text = "동네 인기 병원",
+                        text = "근처 약국",
                         backgroundColor = PopularHospital,
                         onClick = {
                             // 인기 병원 검색 결과 화면으로 이동
-                            navigateToScreen(Screen.HospitalSearchResult.createRoute("인기병원"))
+                            navigateToScreen(Screen.HospitalSearchResult.createRoute("약국"))
                         }
                     )
                 }
@@ -171,6 +174,7 @@ fun HomeScreen(
                     DepartmentItem(
                         name = "소아청소년과",
                         backgroundColor = PediatricsDept,
+                        iconResId = R.drawable.ic_pediatrics,
                         onClick = {
                             navigateToScreen(Screen.HospitalSearchResult.createRoute("소아청소년과"))
                         }
@@ -181,6 +185,7 @@ fun HomeScreen(
                     DepartmentItem(
                         name = "이비인후과",
                         backgroundColor = EntDept,
+                        iconResId = R.drawable.ic_ent,
                         onClick = {
                             navigateToScreen(Screen.HospitalSearchResult.createRoute("이비인후과"))
                         }
@@ -191,6 +196,7 @@ fun HomeScreen(
                     DepartmentItem(
                         name = "가정의학과",
                         backgroundColor = FamilyMedicineDept,
+                        iconResId = R.drawable.ic_family_medicine,
                         onClick = {
                             navigateToScreen(Screen.HospitalSearchResult.createRoute("가정의학과"))
                         }
@@ -201,6 +207,7 @@ fun HomeScreen(
                     DepartmentItem(
                         name = "산부인과",
                         backgroundColor = ObGynDept,
+                        iconResId = R.drawable.ic_obgyn,
                         onClick = {
                             navigateToScreen(Screen.HospitalSearchResult.createRoute("산부인과"))
                         }
@@ -218,7 +225,7 @@ fun HomeScreen(
 }
 
 @Composable
-fun TopAppBar(location: String, navigateToScreen: (String) -> Unit = {}) {
+fun TopAppBar(location: String, onNavigate: (String) -> Unit) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -263,7 +270,7 @@ fun TopAppBar(location: String, navigateToScreen: (String) -> Unit = {}) {
                 tint = Color.Black,
                 modifier = Modifier
                     .size(24.dp)
-                    .clickable {  }
+                    .clickable { onNavigate(Screen.MyPage.route) }
             )
 
             Spacer(modifier = Modifier.width(16.dp))
@@ -275,7 +282,7 @@ fun TopAppBar(location: String, navigateToScreen: (String) -> Unit = {}) {
                 tint = Color.Black,
                 modifier = Modifier
                     .size(24.dp)
-                    .clickable {  }
+                    .clickable { onNavigate(Screen.Notification.route) }
             )
 
 
@@ -565,7 +572,8 @@ fun ChildGrowthBanner(navigateToScreen: (String) -> Unit) {
 fun DepartmentItem(
     name: String,
     backgroundColor: Color,
-    onClick: () -> Unit = {}
+    onClick: () -> Unit = {},
+    iconResId: Int,
 ) {
     val dimens = appDimens()
 
@@ -579,8 +587,19 @@ fun DepartmentItem(
             modifier = Modifier.size(dimens.departmentIconSize.dp),
             shape = RoundedCornerShape(dimens.buttonCornerRadius.dp),
             colors = CardDefaults.cardColors(containerColor = backgroundColor),
-            elevation = CardDefaults.cardElevation(0.dp)
-        ) { }
+            elevation = CardDefaults.cardElevation(0.dp),
+        ) {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center
+            ) {
+                Image(
+                    painter = painterResource(id = iconResId),
+                    contentDescription = name,
+                    modifier = Modifier.size(40.dp)
+                )
+            }
+        }
 
         Spacer(modifier = Modifier.height(dimens.paddingMedium.dp))
 

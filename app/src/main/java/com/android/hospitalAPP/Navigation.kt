@@ -30,6 +30,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.material3.Text
 import com.android.hospitalAPP.ui.screens.WithdrawAccountScreen
 import com.android.hospitalAPP.ui.screens.ChangePasswordScreen
+import com.android.hospitalAPP.ui.screens.NotificationScreen
 
 sealed class Screen(val route: String) {
     object Home : Screen("home")
@@ -55,6 +56,8 @@ sealed class Screen(val route: String) {
     object WithdrawAccount : Screen("withdraw_account")
 
     object HealthInfoInput : Screen("health_info_input")
+
+    object Notification : Screen("notification")
 }
 
 @Composable
@@ -145,7 +148,8 @@ fun AppNavigation(
             ProfileManagementScreen(
                 onNavigateBack         = { navController.popBackStack() },
                 onNavigateChangePassword = { navController.navigate(Screen.ChangePassword.route) },
-                onNavigateHome         = { navController.navigate(Screen.Home.route) }
+                onNavigateHome         = { navController.navigate(Screen.Home.route) },
+                navigateToScreen = { navController.navigate(Screen.Login.route) }
             )
         }
         // 비밀번호 변경 화면
@@ -254,7 +258,14 @@ fun AppNavigation(
             HealthInfoInputScreen(
                 viewModel = viewModel(),
                 onNavigateBack = { navController.popBackStack() },
-                onNavigateHome = { navController.navigate(Screen.Home.route) }
+                onNavigateHome = { navController.navigate(Screen.Home.route) },
+                navigateToScreen = { navController.navigate(Screen.Login.route) }
+            )
+        }
+
+        composable(route = Screen.Notification.route) {
+            NotificationScreen(
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 
