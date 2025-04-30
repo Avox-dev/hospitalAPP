@@ -56,6 +56,9 @@ fun HealthInfoInputScreen(
             navigateToScreen(Screen.Login.route)
         }
     }
+    LaunchedEffect(Unit) {
+        viewModel.loadHealthInfo()
+    }
 
     Scaffold(
         topBar = {

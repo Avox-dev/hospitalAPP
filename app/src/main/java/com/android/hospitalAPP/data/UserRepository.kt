@@ -47,6 +47,12 @@ class UserRepository {
         _currentUser.value = user
     }
 
+    // 🔄 UserRepository에 Patient 저장 기능 추가
+    fun setPatientInfo(patient: Patient) {
+        prefsManager?.savePatientInfo(patient) // 필요 시 SharedPreferences에도 저장 가능
+        // 상태 보존이 필요하면 추가로 MutableStateFlow 생성해서 관리 가능
+    }
+
     fun logoutUser() {
         // 서버에 로그아웃 요청 보내기
         CoroutineScope(Dispatchers.IO).launch {

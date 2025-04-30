@@ -44,6 +44,26 @@ class HealthInfoInputViewModel : ViewModel() {
             }
         }
     }
+    fun loadHealthInfo() {
+        viewModelScope.launch {
+            try {
+                val result = userService.getHealthInfo()
+                if (result is ApiResult.Success) {
+                    val data = result.data.optJSONObject("data")
+                    data?.let {
+                        bloodType.value = it.optString("blood_type", "")
+                        heightCm.value = it.optString("height_cm", "")
+                        weightKg.value = it.optString("weight_kg", "")
+                        allergyInfo.value = it.optString("allergy_info", "")
+                        pastIllnesses.value = it.optString("past_illnesses", "")
+                        chronicDiseases.value = it.optString("chronic_diseases", "")
+                    }
+                }
+            } catch (e: Exception) {
+                println("건강 정보 로딩 실패: ${e.message}")
+            }
+        }
+    }
 
     sealed class UpdateState {
         object Initial : UpdateState()

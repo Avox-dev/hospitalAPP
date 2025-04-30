@@ -176,5 +176,13 @@ class UserService {
         ApiServiceCommon.postRequest(ApiConstants.HEALTH_INFO_URL, jsonBody)
     }
 
+    // ✅ GET API 요청 추가
+    suspend fun getHealthInfo(): ApiResult<JSONObject> = withContext(Dispatchers.IO) {
+        val url = ApiConstants.HEALTH_INFO_URL
+        ApiServiceCommon.getRequest(url)
+    }
+
+
+
 }
 
