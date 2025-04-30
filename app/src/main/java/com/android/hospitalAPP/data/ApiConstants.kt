@@ -12,7 +12,7 @@ object ApiConstants {
     const val USER_UPDATE_URL = "$BASE_URL/users/update"
     const val CHANGEPWD_URL = "$BASE_URL/users/change-password"
     const val WITHDRAW_URL = "$BASE_URL/users/withdraw"
-
+    const val HEALTH_INFO_URL = "$BASE_URL/patient/info"
 
     // 예약 관련 API
     const val RESERVATION_URL = "$BASE_URL/reservations"

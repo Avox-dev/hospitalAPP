@@ -144,5 +144,37 @@ class UserService {
         ApiServiceCommon.postRequest(ApiConstants.WITHDRAW_URL, jsonBody)
     }
 
+    /**
+     * ✅ 환자 정보 업데이트 API 요청
+     * @param bloodType 혈액형
+     * @param heightCm 키
+     * @param weightKg 몸무게
+     * @param allergyInfo 알러지
+     * @param pastIllnesses 과거 이력
+     * @param chronicDiseases 만성 질환
+     * @return 정보 업데이트 요청 결과 (ApiResult)
+     */
+    suspend fun submitHealthInfo(
+        bloodType: String,
+        heightCm: String,
+        weightKg: String,
+        allergyInfo: String,
+        pastIllnesses: String,
+        chronicDiseases: String
+    ): ApiResult<JSONObject> = withContext(Dispatchers.IO) {
+        val userId = UserRepository.getInstance().currentUser.value?.userId?.toIntOrNull() ?: -1
+
+        val jsonBody = JSONObject().apply {
+            put("user_id", userId)
+            put("blood_type", bloodType)
+            put("height_cm", heightCm.toFloatOrNull() ?: 0f)
+            put("weight_kg", weightKg.toFloatOrNull() ?: 0f)
+            put("allergy_info", allergyInfo)
+            put("past_illnesses", pastIllnesses)
+            put("chronic_diseases", chronicDiseases)
+        }
+        ApiServiceCommon.postRequest(ApiConstants.HEALTH_INFO_URL, jsonBody)
+    }
+
 }
 

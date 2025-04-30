@@ -252,6 +252,7 @@ fun AppNavigation(
 
         composable(route = Screen.HealthInfoInput.route) {
             HealthInfoInputScreen(
+                viewModel = viewModel(),
                 onNavigateBack = { navController.popBackStack() },
                 onNavigateHome = { navController.navigate(Screen.Home.route) }
             )

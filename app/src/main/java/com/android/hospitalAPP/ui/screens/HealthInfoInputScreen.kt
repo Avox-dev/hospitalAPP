@@ -18,16 +18,38 @@ import androidx.compose.ui.Alignment
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.unit.sp
 import com.android.hospitalAPP.data.UserRepository
+import com.android.hospitalAPP.viewmodel.HealthInfoInputViewModel
+import android.widget.Toast
+import androidx.compose.ui.platform.LocalContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HealthInfoInputScreen(
+    viewModel: HealthInfoInputViewModel,
     onNavigateBack: () -> Unit,
     onNavigateHome: () -> Unit
 ) {
     val userRepository = UserRepository.getInstance()
     val currentUser by userRepository.currentUser.collectAsState()
     val dimens = 16.dp
+
+    val context = LocalContext.current
+    val state by viewModel.updateUiState.collectAsState()
+
+    // 성공 시 토스트 + 홈 이동
+    LaunchedEffect(state) {
+        when (state) {
+            is HealthInfoInputViewModel.UpdateState.Success -> {
+                Toast.makeText(context, (state as HealthInfoInputViewModel.UpdateState.Success).message, Toast.LENGTH_SHORT).show()
+                onNavigateHome()
+            }
+            is HealthInfoInputViewModel.UpdateState.Error -> {
+                Toast.makeText(context, (state as HealthInfoInputViewModel.UpdateState.Error).message, Toast.LENGTH_SHORT).show()
+            }
+            else -> {}
+        }
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -60,12 +82,12 @@ fun HealthInfoInputScreen(
                 // 첫 번째 줄: 혈액형 + 알레르기
                 Row(modifier = Modifier.fillMaxWidth()) {
                     Box(modifier = Modifier.weight(1f).padding(end = 8.dp)) {
-                        BloodTypeDropdown()
+                        BloodTypeDropdown(viewModel)
                     }
                     Box(modifier = Modifier.weight(1f).padding(start = 8.dp)) {
                         OutlinedTextField(
-                            value = "",
-                            onValueChange = {},
+                            value = viewModel.allergyInfo.value,
+                            onValueChange = { viewModel.allergyInfo.value = it },
                             label = { Text("알레르기 정보") },
                             modifier = Modifier.fillMaxWidth(),
                             shape = RoundedCornerShape(8.dp)
@@ -83,8 +105,8 @@ fun HealthInfoInputScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             OutlinedTextField(
-                                value = "",
-                                onValueChange = {},
+                                value = viewModel.heightCm.value,
+                                onValueChange = { viewModel.heightCm.value = it },
                                 label = { Text("키") },
                                 modifier = Modifier.weight(1f),
                                 shape = RoundedCornerShape(8.dp)
@@ -100,8 +122,8 @@ fun HealthInfoInputScreen(
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             OutlinedTextField(
-                                value = "",
-                                onValueChange = {},
+                                value = viewModel.weightKg.value,
+                                onValueChange = { viewModel.weightKg.value = it },
                                 label = { Text("몸무게") },
                                 modifier = Modifier.weight(1f),
                                 shape = RoundedCornerShape(8.dp)
@@ -116,8 +138,8 @@ fun HealthInfoInputScreen(
 
                 // 과거 질병 이력 (멀티라인, 높이 증가)
                 OutlinedTextField(
-                    value = "",
-                    onValueChange = {},
+                    value = viewModel.pastIllnesses.value,
+                    onValueChange = { viewModel.pastIllnesses.value = it },
                     label = { Text("과거 질병 이력") },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -130,8 +152,8 @@ fun HealthInfoInputScreen(
 
                 // 만성 질환 (멀티라인, 높이 증가)
                 OutlinedTextField(
-                    value = "",
-                    onValueChange = {},
+                    value = viewModel.chronicDiseases.value,
+                    onValueChange = { viewModel.chronicDiseases.value = it },
                     label = { Text("만성 질환") },
                     modifier = Modifier
                         .fillMaxWidth()
@@ -139,6 +161,15 @@ fun HealthInfoInputScreen(
                     maxLines = 5,
                     shape = RoundedCornerShape(8.dp)
                 )
+
+                // 저장 버튼
+                Button(
+                    onClick = { viewModel.submitHealthInfo() },
+                    modifier = Modifier.fillMaxWidth().padding(16.dp)
+                ) {
+                    Text("저장하기")
+                }
+
             }
         }
     }
@@ -150,19 +181,20 @@ fun HealthInfoInputScreen(
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BloodTypeDropdown() {
+fun BloodTypeDropdown(
+    viewModel: HealthInfoInputViewModel
+) {
     val bloodTypes = listOf("A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-")
     var expanded by remember { mutableStateOf(false) }
-    var selectedBloodType by remember { mutableStateOf("") }
 
     ExposedDropdownMenuBox(
         expanded = expanded,
         onExpandedChange = { expanded = !expanded }
     ) {
-        OutlinedTextField( // ← TextField → OutlinedTextField 로 변경!
+        OutlinedTextField(
             readOnly = true,
-            value = selectedBloodType.ifEmpty { "선택해주세요" },
-            onValueChange = {},
+            value = viewModel.bloodType.value.ifEmpty { "선택하세요" }, // 기본 표시값
+            onValueChange = { viewModel.bloodType.value = it },
             label = { Text("혈액형") },
             modifier = Modifier
                 .fillMaxWidth()
@@ -177,7 +209,7 @@ fun BloodTypeDropdown() {
                 unfocusedLabelColor = MaterialTheme.colorScheme.outline
             ),
             shape = RoundedCornerShape(8.dp),
-            singleLine = true // ✅ 한 줄로 제한 (알레르기 정보와 맞추기)
+            singleLine = true
         )
 
         ExposedDropdownMenu(
@@ -189,12 +221,12 @@ fun BloodTypeDropdown() {
                     text = {
                         Text(
                             text = type,
-                            color = if (selectedBloodType == type)
+                            color = if (viewModel.bloodType.value == type)
                                 MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface
                         )
                     },
                     onClick = {
-                        selectedBloodType = type
+                        viewModel.bloodType.value = type
                         expanded = false
                     }
                 )
@@ -202,3 +234,4 @@ fun BloodTypeDropdown() {
         }
     }
 }
+

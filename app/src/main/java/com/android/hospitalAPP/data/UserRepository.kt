@@ -120,5 +120,14 @@ data class User(
     val birthdate: String = "",    // 추가
     val address: String = "",      // 추가
     val sessionId: String = "",    // 추가(세션 아이디)
-    val address_detail: String = ""// 추가(상세주소)
+    val address_detail: String = "",// 추가(상세주소)
+)
+data class Patient(
+    /*환자 정보*/
+    val bloodType: String,      // 혈액형
+    val heightCm: String,        // 키
+    val weightKg: String,        // 몸무게
+    val allergyInfo: String,    // 알레르기 정보
+    val pastIllnesses: String,  // 과거 질병 이력
+    val chronicDiseases: String // 만성질환
 )
