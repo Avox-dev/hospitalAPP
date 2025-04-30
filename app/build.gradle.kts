@@ -92,4 +92,6 @@ dependencies {
 //스와이프 기능
     implementation ("com.google.accompanist:accompanist-pager:0.32.0")
     implementation ("com.google.accompanist:accompanist-pager-indicators:0.32.0")
+
+    implementation ("androidx.compose.material3:material3:1.2.0")
 }

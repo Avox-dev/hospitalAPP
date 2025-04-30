@@ -93,11 +93,13 @@ object ApiServiceCommon {
 
     suspend fun getRequest(url: String): ApiResult<JSONObject> {
         return try {
+            val sessionId = UserRepository.getInstance().getSessionId()
             Log.d("ApiServiceCommon", "GET 요청 URL: $url")
 
             val request = Request.Builder()
                 .url(url)
                 .get()
+                .addHeader("Cookie", "session=$sessionId")
                 .addHeader("Connection", "close")  // 서버와 일치하도록 close 설정
                 .build()
 

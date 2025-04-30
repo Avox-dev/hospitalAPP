@@ -2,6 +2,8 @@ package com.android.hospitalAPP.util
 
 import android.content.Context
 import android.content.SharedPreferences
+import org.json.JSONObject
+import com.android.hospitalAPP.data.Patient
 
 /**
  * SharedPreferences를 관리하는 유틸리티 클래스
@@ -67,6 +69,18 @@ class SharedPreferencesManager(context: Context) {
         }
         editor.remove(KEY_SESSION_ID)
         editor.apply()
+    }
+
+    fun savePatientInfo(patient: Patient) {
+        val json = JSONObject().apply {
+            put("blood_type", patient.bloodType)
+            put("height_cm", patient.heightCm)
+            put("weight_kg", patient.weightKg)
+            put("allergy_info", patient.allergyInfo)
+            put("past_illnesses", patient.pastIllnesses)
+            put("chronic_diseases", patient.chronicDiseases)
+        }
+        prefs.edit().putString("patient_info", json.toString()).apply()
     }
 
     /**

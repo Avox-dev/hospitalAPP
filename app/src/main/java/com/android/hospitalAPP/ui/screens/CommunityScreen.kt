@@ -30,9 +30,9 @@ import com.android.hospitalAPP.viewmodel.CommunityViewModel
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CommunityScreen(
-    navigateToScreen: (String) -> Unit,
-    viewModel: CommunityViewModel = viewModel()
+    navigateToScreen: (String) -> Unit, viewModel: CommunityViewModel = viewModel()
 ) {
+    var searchQuery by remember { mutableStateOf("") }
     val posts by viewModel.posts.collectAsState()
     val notices by viewModel.notices.collectAsState()
 
@@ -43,38 +43,32 @@ fun CommunityScreen(
     val categories = listOf("전체")
     var selectedCategory by remember { mutableStateOf("전체") }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("커뮤니티", fontWeight = FontWeight.Bold) },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = Color.White
+    Scaffold(topBar = {
+        TopAppBar(
+            title = { Text("커뮤니티", fontWeight = FontWeight.Bold) },
+            colors = TopAppBarDefaults.topAppBarColors(
+                containerColor = Color.White
+            )
+        )
+    }, floatingActionButton = {
+        // QnA 탭에서만 글쓰기 버튼 표시
+        if (selectedTab == 0) {
+            FloatingActionButton(
+                onClick = { navigateToScreen(Screen.WritePost.route) },
+                containerColor = Color(0xFFD0BCFF),
+                contentColor = Color.White,
+                shape = CircleShape
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add, contentDescription = "글쓰기"
                 )
-            )
-        },
-        floatingActionButton = {
-            // QnA 탭에서만 글쓰기 버튼 표시
-            if (selectedTab == 0) {
-                FloatingActionButton(
-                    onClick = { navigateToScreen(Screen.WritePost.route) },
-                    containerColor = Color(0xFFD0BCFF),
-                    contentColor = Color.White,
-                    shape = CircleShape
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Add,
-                        contentDescription = "글쓰기"
-                    )
-                }
             }
-        },
-        bottomBar = {
-            BottomNavigation(
-                currentRoute = Screen.Community.route,
-                onNavigate = navigateToScreen
-            )
         }
-    ) { paddingValues ->
+    }, bottomBar = {
+        BottomNavigation(
+            currentRoute = Screen.Community.route, onNavigate = navigateToScreen
+        )
+    }) { paddingValues ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -89,14 +83,20 @@ fun CommunityScreen(
                 Tab(
                     selected = selectedTab == 0,
                     onClick = { selectedTab = 0 },
-                    text = { Text("Q&A") }
-                )
+                    text = { Text("Q&A") })
                 Tab(
                     selected = selectedTab == 1,
                     onClick = { selectedTab = 1 },
-                    text = { Text("공지사항") }
-                )
+                    text = { Text("공지사항") })
             }
+            OutlinedTextField(
+                value = searchQuery,
+                onValueChange = { searchQuery = it },
+                label = { Text("검색") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 8.dp)
+            )
 
             when (selectedTab) {
                 0 -> {
@@ -122,15 +122,15 @@ fun CommunityScreen(
                                         modifier = Modifier
                                             .clip(RoundedCornerShape(20.dp))
                                             .background(
-                                                if (selectedCategory == category)
-                                                    Color(0xFFD0BCFF) else Color(0xFFF5F5F5)
+                                                if (selectedCategory == category) Color(0xFFD0BCFF) else Color(
+                                                    0xFFF5F5F5
+                                                )
                                             )
                                             .padding(horizontal = 16.dp, vertical = 8.dp)
                                     ) {
                                         Text(
                                             text = category,
-                                            color = if (selectedCategory == category)
-                                                Color.White else Color.Gray
+                                            color = if (selectedCategory == category) Color.White else Color.Gray
                                         )
                                     }
                                 }
@@ -143,20 +143,27 @@ fun CommunityScreen(
                                 .fillMaxSize()
                                 .padding(horizontal = 16.dp)
                         ) {
-                            items(posts.filter {
-                                selectedCategory == "전체" || it.writer == selectedCategory
-                            }) { post ->
+                            items(
+                                posts.filter { post ->
+                                    // (a) 기존 카테고리 필터
+                                    (selectedCategory == "전체" || post.writer == selectedCategory)
+                                            // (b) 검색어 필터
+                                            && (searchQuery.isBlank() || post.title.contains(
+                                        searchQuery,
+                                        ignoreCase = true
+                                    ) || post.content.contains(
+                                        searchQuery, ignoreCase = true
+                                    ))
+                                }) { post ->
                                 PostItem(
                                     post = post,
-                                    onClick = {
-                                        navigateToScreen(Screen.PostDetail.createRoute(post.id))
-                                    }
-                                )
+                                    onClick = { navigateToScreen(Screen.PostDetail.createRoute(post.id)) })
                                 Divider(color = Color(0xFFEEEEEE), thickness = 1.dp)
                             }
                         }
                     }
                 }
+
                 1 -> {
                     // 공지사항 화면
                     LazyColumn(
@@ -164,13 +171,16 @@ fun CommunityScreen(
                             .fillMaxSize()
                             .padding(horizontal = 16.dp)
                     ) {
-                        items(notices) { notice ->
+                        items(
+                            notices.filter { notice ->
+                                searchQuery.isBlank() || notice.title.contains(
+                                    searchQuery,
+                                    ignoreCase = true
+                                ) || notice.comment.contains(searchQuery, ignoreCase = true)
+                            }) { notice ->
                             NoticeItem(
                                 notice = notice,
-                                onClick = {
-                                navigateToScreen(Screen.NoticeDetail.createRoute(notice.id))
-                                }
-                            )
+                                onClick = { navigateToScreen(Screen.NoticeDetail.createRoute(notice.id)) })
                             Divider(color = Color(0xFFEEEEEE), thickness = 1.dp)
                         }
                     }
@@ -182,8 +192,7 @@ fun CommunityScreen(
 
 @Composable
 fun PostItem(
-    post: CommunityViewModel.Post,
-    onClick: () -> Unit
+    post: CommunityViewModel.Post, onClick: () -> Unit
 ) {
     // 기존 PostItem 코드 유지
     Column(
@@ -194,13 +203,10 @@ fun PostItem(
     ) {
         // 카테고리 및 시간
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
+            modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
-                text = post.timeAgo,
-                fontSize = 12.sp,
-                color = Color.Gray
+                text = post.timeAgo, fontSize = 12.sp, color = Color.Gray
             )
         }
 
@@ -230,8 +236,7 @@ fun PostItem(
 
         // 작성자 정보 및 반응
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically
         ) {
             // 프로필 아이콘
             Box(
@@ -239,8 +244,7 @@ fun PostItem(
                     .size(24.dp)
                     .clip(CircleShape)
                     .background(Color(0xFFEEEEEE))
-                    .padding(4.dp),
-                contentAlignment = Alignment.Center
+                    .padding(4.dp), contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Default.Person,
@@ -254,9 +258,7 @@ fun PostItem(
 
             // 작성자 이름
             Text(
-                text = post.writer,
-                fontSize = 12.sp,
-                color = Color.Gray
+                text = post.writer, fontSize = 12.sp, color = Color.Gray
             )
 
             Spacer(modifier = Modifier.weight(1f))
@@ -273,9 +275,7 @@ fun PostItem(
                 Spacer(modifier = Modifier.width(4.dp))
 
                 Text(
-                    text = post.likes.toString(),
-                    fontSize = 12.sp,
-                    color = Color.Gray
+                    text = post.likes.toString(), fontSize = 12.sp, color = Color.Gray
                 )
             }
 
@@ -293,9 +293,7 @@ fun PostItem(
                 Spacer(modifier = Modifier.width(4.dp))
 
                 Text(
-                    text = post.comments.toString(),
-                    fontSize = 12.sp,
-                    color = Color.Gray
+                    text = post.comments.toString(), fontSize = 12.sp, color = Color.Gray
                 )
             }
         }
@@ -304,8 +302,7 @@ fun PostItem(
 
 @Composable
 fun NoticeItem(
-    notice: CommunityViewModel.Notice,
-    onClick: () -> Unit
+    notice: CommunityViewModel.Notice, onClick: () -> Unit
 ) {
     Column(
         modifier = Modifier
@@ -341,13 +338,10 @@ fun NoticeItem(
 
         // 작성자 정보
         Row(
-            modifier = Modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.CenterVertically
+            modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                text = "관리자",
-                fontSize = 12.sp,
-                color = Color.Gray
+                text = "관리자", fontSize = 12.sp, color = Color.Gray
             )
         }
     }

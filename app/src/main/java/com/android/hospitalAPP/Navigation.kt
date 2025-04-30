@@ -19,6 +19,7 @@ import com.android.hospitalAPP.ui.screens.ProfileManagementScreen
 import com.android.hospitalAPP.ui.screens.ReservationHistoryScreen
 import com.android.hospitalAPP.ui.screens.ChatBotScreen
 import com.android.hospitalAPP.ui.screens.HospitalSearchResultScreen
+import com.android.hospitalAPP.ui.screens.HealthInfoInputScreen
 
 import com.android.hospitalAPP.ui.screens.NoticeDetailScreen
 import com.android.hospitalAPP.ui.screens.PostDetailScreen
@@ -29,6 +30,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.material3.Text
 import com.android.hospitalAPP.ui.screens.WithdrawAccountScreen
 import com.android.hospitalAPP.ui.screens.ChangePasswordScreen
+import com.android.hospitalAPP.ui.screens.NotificationScreen
 
 sealed class Screen(val route: String) {
     object Home : Screen("home")
@@ -52,6 +54,10 @@ sealed class Screen(val route: String) {
     }
     object ChangePassword : Screen("change_password")
     object WithdrawAccount : Screen("withdraw_account")
+
+    object HealthInfoInput : Screen("health_info_input")
+
+    object Notification : Screen("notification")
 }
 
 @Composable
@@ -65,16 +71,10 @@ fun AppNavigation(
         modifier = modifier
     ) {
         // 기존 화면 유지
-        composable(Screen.Home.route) {
+        composable(route = Screen.Home.route) {
             HomeScreen(
                 navigateToScreen = { route ->
-                    navController.navigate(route) {
-                        popUpTo(Screen.Home.route) {
-                            saveState = true
-                        }
-                        launchSingleTop = true
-                        restoreState = true
-                    }
+                    navController.navigate(route)
                 }
             )
         }
@@ -148,7 +148,8 @@ fun AppNavigation(
             ProfileManagementScreen(
                 onNavigateBack         = { navController.popBackStack() },
                 onNavigateChangePassword = { navController.navigate(Screen.ChangePassword.route) },
-                onNavigateHome         = { navController.navigate(Screen.Home.route) }
+                onNavigateHome         = { navController.navigate(Screen.Home.route) },
+                navigateToScreen = { navController.navigate(Screen.Login.route) }
             )
         }
         // 비밀번호 변경 화면
@@ -249,6 +250,22 @@ fun AppNavigation(
                     // 예: navController.navigate(Screen.Login.route) 또는 Snackbar 등
                     navController.popBackStack()  // 일단 뒤로 가기만 넣음
                 }
+            )
+        }
+
+
+        composable(route = Screen.HealthInfoInput.route) {
+            HealthInfoInputScreen(
+                viewModel = viewModel(),
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateHome = { navController.navigate(Screen.Home.route) },
+                navigateToScreen = { navController.navigate(Screen.Login.route) }
+            )
+        }
+
+        composable(route = Screen.Notification.route) {
+            NotificationScreen(
+                onNavigateBack = { navController.popBackStack() }
             )
         }
 

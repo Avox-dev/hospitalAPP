@@ -321,6 +321,12 @@ fun MenuListSection(
         )
 
         MenuItemCard(
+            title = "환자 기본 정보",
+            subtitle = "환자 혈액형, 키, 몸무게 등 관리",
+            onClick = { navigateToScreen(Screen.HealthInfoInput.route) }
+        )
+
+        MenuItemCard(
             title = "알림 설정(미구현)",
             subtitle = "앱 알림 설정 및 관리"
         )

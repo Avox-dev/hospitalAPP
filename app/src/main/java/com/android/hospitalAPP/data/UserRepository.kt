@@ -47,6 +47,12 @@ class UserRepository {
         _currentUser.value = user
     }
 
+    // 🔄 UserRepository에 Patient 저장 기능 추가
+    fun setPatientInfo(patient: Patient) {
+        prefsManager?.savePatientInfo(patient) // 필요 시 SharedPreferences에도 저장 가능
+        // 상태 보존이 필요하면 추가로 MutableStateFlow 생성해서 관리 가능
+    }
+
     fun logoutUser() {
         // 서버에 로그아웃 요청 보내기
         CoroutineScope(Dispatchers.IO).launch {
@@ -120,5 +126,14 @@ data class User(
     val birthdate: String = "",    // 추가
     val address: String = "",      // 추가
     val sessionId: String = "",    // 추가(세션 아이디)
-    val address_detail: String = ""// 추가(상세주소)
+    val address_detail: String = "",// 추가(상세주소)
+)
+data class Patient(
+    /*환자 정보*/
+    val bloodType: String,      // 혈액형
+    val heightCm: String,        // 키
+    val weightKg: String,        // 몸무게
+    val allergyInfo: String,    // 알레르기 정보
+    val pastIllnesses: String,  // 과거 질병 이력
+    val chronicDiseases: String // 만성질환
 )

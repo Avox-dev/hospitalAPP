@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.android.hospitalAPP.data.UserRepository
+import com.android.hospitalAPP.navigation.Screen
 import com.android.hospitalAPP.viewmodel.ProfileManagementViewModel
 import java.text.SimpleDateFormat
 import java.util.*
@@ -28,6 +29,7 @@ import java.util.*
 fun ProfileManagementScreen(
     onNavigateBack: () -> Unit,
     onNavigateChangePassword: () -> Unit,
+    navigateToScreen: (String) -> Unit,
     onNavigateHome: () -> Unit,
     viewModel: ProfileManagementViewModel = viewModel()
 ) {
@@ -52,6 +54,11 @@ fun ProfileManagementScreen(
             snackbarHostState.showSnackbar("회원정보가 수정되었습니다.")
             onNavigateHome()
             viewModel.clearEditSuccess()
+        }
+    }
+    LaunchedEffect(currentUser) {
+        if (currentUser == null) {
+            navigateToScreen(Screen.Login.route)
         }
     }
 
