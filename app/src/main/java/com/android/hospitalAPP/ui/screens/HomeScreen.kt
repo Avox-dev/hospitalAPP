@@ -148,7 +148,7 @@ fun HomeScreen(
             Spacer(modifier = Modifier.height(dimens.paddingLarge.dp))
 
             // 우리아이 키/몸무게 배너
-            ChildGrowthBanner()
+            ChildGrowthBanner(navigateToScreen)
 
             Spacer(modifier = Modifier.height(dimens.paddingLarge.dp))
 
@@ -218,7 +218,7 @@ fun HomeScreen(
 }
 
 @Composable
-fun TopAppBar(location: String) {
+fun TopAppBar(location: String, navigateToScreen: (String) -> Unit = {}) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -263,10 +263,11 @@ fun TopAppBar(location: String) {
                 tint = Color.Black,
                 modifier = Modifier
                     .size(24.dp)
-                    .clickable { /* 프로필 화면으로 이동 */ }
+                    .clickable {  }
             )
 
             Spacer(modifier = Modifier.width(16.dp))
+
 
             Icon(
                 imageVector = Icons.Filled.Notifications,
@@ -274,10 +275,12 @@ fun TopAppBar(location: String) {
                 tint = Color.Black,
                 modifier = Modifier
                     .size(24.dp)
-                    .clickable { /* 알림 화면으로 이동 */ }
+                    .clickable {  }
             )
 
+
             Spacer(modifier = Modifier.width(16.dp))
+
 
             Icon(
                 imageVector = Icons.Filled.Star,
@@ -285,8 +288,9 @@ fun TopAppBar(location: String) {
                 tint = Color.Black,
                 modifier = Modifier
                     .size(24.dp)
-                    .clickable { /* 즐겨찾기 화면으로 이동 */ }
+                    .clickable {  }
             )
+
         }
     }
 }
@@ -501,14 +505,14 @@ fun CategoryButton(
 }
 
 @Composable
-fun ChildGrowthBanner() {
+fun ChildGrowthBanner(navigateToScreen: (String) -> Unit) {
     val dimens = appDimens()
 
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .height(dimens.growthBannerHeight.dp)
-            .clickable { /* 상세 화면으로 이동 */ },
+            .height(140.dp)
+            .clickable { navigateToScreen(Screen.HealthInfoInput.route) },
         shape = RoundedCornerShape(dimens.cornerRadius.dp),
         colors = CardDefaults.cardColors(containerColor = BannerBackground),
         elevation = CardDefaults.cardElevation(0.dp)
@@ -519,7 +523,9 @@ fun ChildGrowthBanner() {
                 .padding(dimens.paddingLarge.dp)
         ) {
             Column(
-                modifier = Modifier.align(Alignment.CenterStart)
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .fillMaxWidth()
             ) {
                 // NEW 배지
                 Box(
@@ -537,7 +543,7 @@ fun ChildGrowthBanner() {
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
-                    text = "우리 아이 키/몸무게",
+                    text = "환자 기본 정보 입력",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color.Black
@@ -546,7 +552,7 @@ fun ChildGrowthBanner() {
                 Spacer(modifier = Modifier.height(4.dp))
 
                 Text(
-                    text = "또래 중 몇 등인지 확인해보세요!",
+                    text = "혈액형과 키, 몸무게를 입력해보세요!!",
                     fontSize = 12.sp,
                     color = TextSecondary
                 )
@@ -586,4 +592,5 @@ fun DepartmentItem(
         )
     }
 }
+
 
