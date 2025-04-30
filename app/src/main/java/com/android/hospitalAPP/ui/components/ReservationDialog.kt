@@ -20,6 +20,16 @@ import androidx.compose.ui.window.Dialog
 import com.android.hospitalAPP.data.PlaceSearchResult
 import com.android.hospitalAPP.ui.theme.Purple80
 import com.android.hospitalAPP.viewmodel.ReservationViewModel
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import android.app.DatePickerDialog
+import android.app.TimePickerDialog
+import java.util.Calendar
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DateRange
+
 
 /**
  * 병원 예약 다이얼로그
@@ -121,17 +131,10 @@ fun ReservationDialog(
                 Spacer(modifier = Modifier.height(16.dp))
 
                 // 예약 시간 입력 필드
-                OutlinedTextField(
-                    value = reservation_time,
-                    onValueChange = { reservation_time = it },
-                    label = { Text("예약 희망 시간") },
-                    modifier = Modifier.fillMaxWidth(),
-                    shape = RoundedCornerShape(8.dp),
-                    placeholder = { Text("예:YYYY-MM-DD HH:MM") },
-                    colors = OutlinedTextFieldDefaults.colors(
-                        focusedBorderColor = Purple80,
-                        unfocusedBorderColor = Color.LightGray
-                    )
+                DateTimePickerField(
+                    onDateTimeSelected = { selected ->
+                        reservation_time = selected
+                    }
                 )
 
                 Spacer(modifier = Modifier.height(12.dp))
@@ -241,4 +244,59 @@ fun ReservationDialog(
             }
         }
     }
+}
+
+@Composable
+fun DateTimePickerField(
+    label: String = "예약 희망 시간",
+    onDateTimeSelected: (String) -> Unit
+) {
+    val context = LocalContext.current
+    val formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+    val calendar = remember { Calendar.getInstance() }
+    var dateTimeText by remember { mutableStateOf(formatter.format(LocalDateTime.now())) }
+
+    OutlinedTextField(
+        value = dateTimeText,
+        onValueChange = {},
+        label = { Text(label) },
+        readOnly = true,
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(8.dp),
+        placeholder = { Text("예: YYYY-MM-DD HH:MM") },
+        colors = OutlinedTextFieldDefaults.colors(
+            focusedBorderColor = Purple80,
+            unfocusedBorderColor = Color.LightGray
+        ),
+        trailingIcon = {
+            IconButton(onClick = {
+                // 날짜 먼저 선택
+                DatePickerDialog(
+                    context,
+                    { _, year, month, day ->
+                        // 시간 선택 다이얼로그로 연결
+                        TimePickerDialog(
+                            context,
+                            { _, hour, minute ->
+                                calendar.set(year, month, day, hour, minute)
+                                val selected = formatter.format(
+                                    calendar.time.toInstant().atZone(ZoneId.systemDefault()).toLocalDateTime()
+                                )
+                                dateTimeText = selected
+                                onDateTimeSelected(selected)
+                            },
+                            calendar.get(Calendar.HOUR_OF_DAY),
+                            calendar.get(Calendar.MINUTE),
+                            true
+                        ).show()
+                    },
+                    calendar.get(Calendar.YEAR),
+                    calendar.get(Calendar.MONTH),
+                    calendar.get(Calendar.DAY_OF_MONTH)
+                ).show()
+            }) {
+                Icon(Icons.Default.DateRange, contentDescription = "날짜 선택")
+            }
+        }
+    )
 }
