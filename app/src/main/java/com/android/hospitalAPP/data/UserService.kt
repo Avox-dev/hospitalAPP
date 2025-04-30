@@ -1,4 +1,3 @@
-// UserService.kt
 package com.android.hospitalAPP.data
 
 import kotlinx.coroutines.Dispatchers
@@ -15,13 +14,12 @@ class UserService {
      * @param email 사용자 이메일
      * @param userId 사용자 아이디
      * @param password 비밀번호
-     * @param name 이름
      * @param birthdate 생년월일
      * @param phone 전화번호
      * @param address 주소
+     * @param address_detail 상세주소
      * @return 회원가입 처리 결과
      */
-    // UserService.kt의 register 메서드 수정
     suspend fun register(
         email: String,
         userId: String,
@@ -42,12 +40,12 @@ class UserService {
             put("address_detail", address_detail)
         }
 
-        // API 요청 실행
-        ApiServiceCommon.postRequest(ApiConstants.REGISTER_URL, jsonBody)
+        // API 요청 실행 (암호화 없이)
+        ApiServiceCommon.postRequest(ApiConstants.REGISTER_URL, jsonBody, false)
     }
 
     /**
-     * 로그인 API 요청
+     * 로그인 API 요청 - 암호화 사용
      * @param userId 사용자 아이디
      * @param password 비밀번호
      * @return 로그인 처리 결과
@@ -55,7 +53,6 @@ class UserService {
     suspend fun login(
         userId: String,
         password: String,
-
     ): ApiResult<JSONObject> = withContext(Dispatchers.IO) {
         // JSON 요청 본문 생성
         val jsonBody = JSONObject().apply {
@@ -63,12 +60,12 @@ class UserService {
             put("password", password)
         }
 
-        // API 요청 실행
-        ApiServiceCommon.postRequest(ApiConstants.LOGIN_URL, jsonBody)
+        // API 요청 실행 (암호화 사용)
+        ApiServiceCommon.postRequest(ApiConstants.LOGIN_URL, jsonBody, true)
     }
 
     /**
-     * ✅ 사용자 정보 업데이트 API 요청
+     * 사용자 정보 업데이트 API 요청
      * @param email 이메일
      * @param phone 전화번호
      * @param birthdate 생년월일
@@ -92,8 +89,8 @@ class UserService {
             put("address_detail", address_detail)
         }
 
-        // API 요청 실행
-        ApiServiceCommon.postRequest(ApiConstants.USER_UPDATE_URL, jsonBody)
+        // API 요청 실행 (암호화 없이)
+        ApiServiceCommon.postRequest(ApiConstants.USER_UPDATE_URL, jsonBody, false)
     }
 
     /**
@@ -101,48 +98,44 @@ class UserService {
      * @return 로그아웃 처리 결과
      */
     suspend fun logout(): ApiResult<JSONObject> = withContext(Dispatchers.IO) {
-        // 로그아웃은 별도의 데이터 없이 POST 요청만 수행
-        ApiServiceCommon.postRequest(ApiConstants.LOGOUT_URL, JSONObject())
+        // 로그아웃은 별도의 데이터 없이 POST 요청만 수행 (암호화 없이)
+        ApiServiceCommon.postRequest(ApiConstants.LOGOUT_URL, JSONObject(), false)
     }
 
     /**
      * 비밀번호 변경 API 요청
      * @param current_password 기존 비밀번호
      * @param new_password 새 비밀번호
-     * @return 로그인 처리 결과
+     * @return 비밀번호 변경 결과
      */
     suspend fun updatePwd(
         current_password: String,
         new_password: String,
-
-        ): ApiResult<JSONObject> = withContext(Dispatchers.IO) {
+    ): ApiResult<JSONObject> = withContext(Dispatchers.IO) {
         // JSON 요청 본문 생성
         val jsonBody = JSONObject().apply {
             put("current_password", current_password)
             put("new_password", new_password)
         }
 
-        // API 요청 실행
-        ApiServiceCommon.postRequest(ApiConstants.CHANGEPWD_URL, jsonBody)
+        // API 요청 실행 (암호화 없이)
+        ApiServiceCommon.postRequest(ApiConstants.CHANGEPWD_URL, jsonBody, false)
     }
 
     /**
-     * ✅ 회원 탈퇴 API 요청
+     * 회원 탈퇴 API 요청
      * @param password 사용자 비밀번호 (확인용)
      * @return 탈퇴 요청 결과 (ApiResult)
      */
     suspend fun withdrawAccount(
         password: String
-
-        ): ApiResult<JSONObject> = withContext(Dispatchers.IO) {
+    ): ApiResult<JSONObject> = withContext(Dispatchers.IO) {
         // JSON 요청 본문 생성
         val jsonBody = JSONObject().apply {
             put("password", password)
         }
 
-        // API 요청 실행
-        ApiServiceCommon.postRequest(ApiConstants.WITHDRAW_URL, jsonBody)
+        // API 요청 실행 (암호화 없이)
+        ApiServiceCommon.postRequest(ApiConstants.WITHDRAW_URL, jsonBody, false)
     }
-
 }
-
