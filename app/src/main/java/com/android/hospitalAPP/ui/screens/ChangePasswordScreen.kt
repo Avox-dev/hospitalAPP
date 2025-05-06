@@ -38,6 +38,10 @@ fun ChangePasswordScreen(
     var confirmPassword by remember { mutableStateOf("") }
     var isLoading by remember { mutableStateOf(false) }
 
+    var email by remember { mutableStateOf("") }
+    var emailCode by remember { mutableStateOf("") }
+    var isEmailVerified by remember { mutableStateOf(false) }
+
     LaunchedEffect(Unit) {
         // 필요 시 초기화 로직
     }
@@ -100,6 +104,73 @@ fun ChangePasswordScreen(
                 singleLine = true
             )
 
+            // 이메일 입력
+            OutlinedTextField(
+                value = email,
+                onValueChange = { email = it },
+                label = { Text("이메일") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+                singleLine = true
+            )
+
+            // 인증코드 발송 버튼
+            Button(
+                onClick = {
+                    if (!isValidEmail(email)) {
+                        scope.launch {
+                            snackbarHostState.showSnackbar("올바른 이메일 형식을 입력해주세요.")
+                        }
+                    } else {
+                        // 이메일 형식이 올바르면 API 요청
+                        scope.launch {
+                            // TODO: 이메일 인증코드 전송 API 호출
+                            viewModel.sendEmailCode(email)
+                            snackbarHostState.showSnackbar("인증 코드가 이메일로 전송되었습니다.")
+                        }
+                    }
+                },
+                modifier = Modifier
+                    .align(Alignment.End)
+                    .padding(bottom = 8.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFE0E0E0))
+            ) {
+                Text("인증 코드 발송", color = Color.Black)
+            }
+
+            // 인증 코드 입력
+            OutlinedTextField(
+                value = emailCode,
+                onValueChange = { emailCode = it },
+                label = { Text("인증 코드 입력") },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                singleLine = true
+            )
+
+            // 인증 확인 버튼
+            Button(
+                onClick = {
+                    // TODO: 서버에 email + emailCode 전송하여 인증 확인
+                    isEmailVerified = true // ← 실제로는 성공 응답 후 변경
+                    scope.launch {
+                        viewModel.verifyCode(emailCode)
+                        snackbarHostState.showSnackbar("이메일 인증이 완료되었습니다.")
+                    }
+                },
+                modifier = Modifier
+                    .align(Alignment.End)
+                    .padding(bottom = 16.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Color(0xFFD0BCFF)),
+                enabled = email.isNotBlank() && emailCode.isNotBlank() && !isEmailVerified
+            ) {
+                Text("인증 확인", color = Color.Black)
+            }
+
             Spacer(modifier = Modifier.height(24.dp))
 
             Button(
@@ -151,4 +222,8 @@ fun ChangePasswordScreen(
             }
         }
     }
+}
+
+fun isValidEmail(email: String): Boolean {
+    return android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
 }
