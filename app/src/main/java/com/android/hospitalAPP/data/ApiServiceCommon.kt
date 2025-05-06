@@ -12,6 +12,7 @@ import okhttp3.Protocol
 import java.io.IOException
 import java.net.Proxy
 import com.android.hospitalAPP.util.AesEncryptionUtil
+import okhttp3.FormBody
 
 sealed class ApiResult<out T> {
     data class Success<T>(val data: T) : ApiResult<T>()
@@ -167,6 +168,24 @@ object ApiServiceCommon {
             ApiResult.Error(message = "응답 처리 오류: ${e.message}")
         }
     }
+    suspend fun postForm(
+        url: String,
+        formBody: FormBody
+    ): ApiResult<JSONObject> = try {
+        val sessionId = UserRepository.getInstance().getSessionId()
+        Log.d("ApiServiceCommon", "세션 아이디: $sessionId")
+        Log.d("ApiServiceCommon", "POST Form URL: $url")
+        Log.d("ApiServiceCommon", "POST Form Body: $formBody")
 
+        val request = Request.Builder()
+            .url(url)
+            .post(formBody)
+            .addHeader("Cookie", "session=$sessionId")
+            .build()
 
+        executeRequest(request)
+    } catch (e: Exception) {
+        Log.e("ApiServiceCommon", "POST Form 예외: ${e.message}", e)
+        ApiResult.Error(message = "네트워크 오류: ${e.message}")
+    }
 }

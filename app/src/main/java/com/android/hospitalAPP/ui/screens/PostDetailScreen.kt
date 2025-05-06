@@ -1,26 +1,46 @@
+// PostDetailScreen.kt
 package com.android.hospitalAPP.ui.screens
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material.Divider
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.android.hospitalAPP.data.model.Comment
+import com.android.hospitalAPP.ui.components.CommentItem
+import com.android.hospitalAPP.ui.components.ReplyItem
 import com.android.hospitalAPP.viewmodel.CommunityViewModel
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PostDetailScreen(
-    post: CommunityViewModel.Post,
-    onNavigateBack: () -> Unit
+    postId: Int,
+    onNavigateBack: () -> Unit,
+    viewModel: CommunityViewModel = viewModel()
 ) {
+    // 게시글 & 댓글 상태
+    val posts by viewModel.posts.collectAsState()
+    val post = posts.find { it.id == postId } ?: return
+    val comments by viewModel.comments.collectAsState()
+
+    // 입력 상태
+    var newComment by remember { mutableStateOf("") }
+    var replyingTo by remember { mutableStateOf<Int?>(null) }
+
+    // 댓글 불러오기
+    LaunchedEffect(postId) {
+        viewModel.loadComments(postId)
+    }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -33,44 +53,81 @@ fun PostDetailScreen(
             )
         }
     ) { paddingValues ->
-        Column(
+        LazyColumn(
             modifier = Modifier
                 .padding(paddingValues)
-                .padding(16.dp)
-                .verticalScroll(rememberScrollState())
+                .padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-
-            Row(
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(text = post.title, fontSize = 22.sp, fontWeight = FontWeight.Bold)
+            // 1) 게시글 제목/작성자/좋아요/본문
+            item {
+                Text(
+                    text = post.title,
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold
+                )
+                Spacer(Modifier.height(8.dp))
+                Divider()
+                Spacer(Modifier.height(8.dp))
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text("작성자: ${post.writer}", fontSize = 14.sp)
+                    Text("좋아요: ${post.likes}", fontSize = 14.sp)
+                }
+                Spacer(Modifier.height(8.dp))
+                Divider()
+                Spacer(Modifier.height(16.dp))
+                Text(text = post.content, fontSize = 16.sp)
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
-            Divider()
-            Spacer(modifier = Modifier.height(8.dp))
-
-            Row(
-                horizontalArrangement = Arrangement.SpaceBetween,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(text = "작성자: ${post.writer}", fontSize = 14.sp)
-                Text(text = "좋아요: ${post.likes}", fontSize = 14.sp)
+            // 2) 댓글 섹션 헤더
+            item {
+                Spacer(Modifier.height(24.dp))
+                Text(text = "댓글", style = MaterialTheme.typography.titleMedium)
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
-            Divider()
-            Spacer(modifier = Modifier.height(16.dp))
+            // 3) 댓글 & 대댓글 리스트
+            items(comments) { comment ->
+                CommentItem(comment = comment, onReplyClick = {
+                    replyingTo = comment.id
+                })
+                comment.replies.forEach { reply ->
+                    ReplyItem(reply = reply)
+                }
+                Divider()
+            }
 
-            Text(
-                text = post.content,
-                fontSize = 16.sp
-            )
-
-            Spacer(modifier = Modifier.height(24.dp))
-
-
+            // 4) 입력창
+            item {
+                Spacer(Modifier.height(16.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedTextField(
+                        value = newComment,
+                        onValueChange = { newComment = it },
+                        label = {
+                            Text(if (replyingTo == null) "댓글 입력" else "대댓글 입력")
+                        },
+                        modifier = Modifier.weight(1f)
+                    )
+                    Spacer(Modifier.width(8.dp))
+                    Button(onClick = {
+                        if (newComment.isNotBlank()) {
+                            viewModel.postComment(postId, newComment.trim(), replyingTo)
+                            newComment = ""
+                            replyingTo = null
+                        }
+                    }) {
+                        Text("등록")
+                    }
+                }
+            }
         }
     }
 }

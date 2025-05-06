@@ -219,24 +219,16 @@ fun AppNavigation(
                 Text("공지사항을 찾을 수 없습니다.")
             }
         }
+        // 댓글/대댓글 기능
         composable(
-            route = "post_detail/{postId}",
+            route = Screen.PostDetail.route,
             arguments = listOf(navArgument("postId") { type = NavType.IntType })
         ) { backStackEntry ->
-            val postId = backStackEntry.arguments?.getInt("postId") ?: 0
-            val viewModel: CommunityViewModel = viewModel()
-
-            val postList: List<CommunityViewModel.Post> by viewModel.posts.collectAsState()
-            val post = postList.find { it.id == postId }
-
-            if (post != null) {
-                PostDetailScreen(
-                    post = post,
-                    onNavigateBack = { navController.popBackStack() }
-                )
-            } else {
-                Text("게시글을 찾을 수 없습니다.")
-            }
+            val id = backStackEntry.arguments?.getInt("postId") ?: 0
+            PostDetailScreen(
+                postId = id,
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
 
         // 회원탈퇴 화면
