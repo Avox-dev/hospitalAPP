@@ -22,7 +22,7 @@ class ChangePasswordViewModel : ViewModel() {
             _updatePwdState.value = UpdatePwdState.Loading
 
             try {
-                // UserService를 통한 회원가입 API 호출
+                // 비밀번호 변경 API 호출
                 val result = userService.updatePwd(current_password, new_password)
 
                 // 결과 처리
@@ -57,5 +57,59 @@ class ChangePasswordViewModel : ViewModel() {
         object Loading : UpdatePwdState()
         data class Success(val message: String) : UpdatePwdState()
         data class Error(val message: String) : UpdatePwdState()
+    }
+
+    // 이메일 코드 전송 처리
+    fun sendEmailCode(email: String) {
+        viewModelScope.launch {
+            try {
+                val result = userService.sendVerificationCode(email)
+                when (result) {
+                    is ApiResult.Success -> {
+                        val responseData = result.data
+                        val status = responseData.optString("status")
+                        val message = responseData.optString("message")
+
+                        if (status == "success") {
+                            println("✅ 이메일 전송 성공: $message")
+                        } else {
+                            println("❌ 전송 실패: $message")
+                        }
+                    }
+                    is ApiResult.Error -> {
+                        println("❌ 서버 오류: ${result.message}")
+                    }
+                }
+            } catch (e: Exception) {
+                println("❌ 예외 발생: ${e.message}")
+            }
+        }
+    }
+
+    // 이메일 코드 인증 처리
+    fun verifyCode(code: String) {
+        viewModelScope.launch {
+            try {
+                val result = userService.VerifyCode(code)
+                when (result) {
+                    is ApiResult.Success -> {
+                        val responseData = result.data
+                        val status = responseData.optString("status")
+                        val message = responseData.optString("message")
+
+                        if (status == "success") {
+                            println("✅ 이메일 인증 성공: $message")
+                        } else {
+                            println("❌ 인증 실패: $message")
+                        }
+                    }
+                    is ApiResult.Error -> {
+                        println("❌ 서버 오류: ${result.message}")
+                    }
+                }
+            } catch (e: Exception) {
+                println("❌ 예외 발생: ${e.message}")
+            }
+        }
     }
 }

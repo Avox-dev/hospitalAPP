@@ -4,6 +4,7 @@ package com.android.hospitalAPP.data
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
+import okhttp3.FormBody
 
 /**
  * 사용자 관련 API 요청을 처리하는 서비스 클래스
@@ -178,6 +179,34 @@ class UserService {
         ApiServiceCommon.getRequest(url)
     }
 
+    /**
+     * 이메일 코드 전송 API 요청
+     * @param email 사용자 이메일
+     * @return 요청 결과 (ApiResult)
+     */
+    suspend fun sendVerificationCode(
+        email: String
+    ): ApiResult<JSONObject> = withContext(Dispatchers.IO) {
+        val formBody = FormBody.Builder()
+            .add("email", email)
+            .build()
 
+        ApiServiceCommon.postFormRequest(ApiConstants.SEND_EMAIL_CODE_URL, formBody)
+    }
+
+    /**
+     * 이메일 코드 인증 API 요청
+     * @param code 사용자 이메일
+     * @return 요청 결과 (ApiResult)
+     */
+    suspend fun VerifyCode(
+        code: String
+    ): ApiResult<JSONObject> = withContext(Dispatchers.IO) {
+        val formBody = FormBody.Builder()
+            .add("code", code)
+            .build()
+
+        ApiServiceCommon.postFormRequest(ApiConstants.VERIFY_CODE_URL, formBody)
+    }
 
 }

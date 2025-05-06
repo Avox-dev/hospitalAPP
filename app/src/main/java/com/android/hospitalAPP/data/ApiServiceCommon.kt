@@ -12,6 +12,7 @@ import okhttp3.Protocol
 import java.io.IOException
 import java.net.Proxy
 import com.android.hospitalAPP.util.AesEncryptionUtil
+import okhttp3.FormBody
 
 sealed class ApiResult<out T> {
     data class Success<T>(val data: T) : ApiResult<T>()
@@ -106,6 +107,53 @@ object ApiServiceCommon {
             executeRequest(request)
         } catch (e: Exception) {
             Log.e("ApiServiceCommon", "GET 요청 중 예외 발생: ${e.message}", e)
+            ApiResult.Error(message = "네트워크 오류: ${e.message}")
+        }
+    }
+
+    // form 형식 post 요청
+    suspend fun postFormRequest(
+        url: String,
+        jsonBody: FormBody,
+        useEncryption: Boolean = false  // 기본값은 false (암호화 사용하지 않음)
+    ): ApiResult<JSONObject> {
+        return try {
+            val sessionId = UserRepository.getInstance().getSessionId()
+            Log.d("ApiServiceCommon", "세션 아이디 값 확인: $sessionId")
+
+            Log.d("ApiServiceCommon", "POST 요청 URL: $url")
+            Log.d("ApiServiceCommon", "POST 요청 Body: $jsonBody")
+
+            // 요청 빌더 초기화
+            val requestBuilder = Request.Builder().url(url)
+
+            // 암호화 사용 여부에 따라 요청 본문 및 헤더 설정
+            if (useEncryption) {
+                val jsonString = jsonBody.toString() // ⚠ FormBody는 여전히 부적절
+                val encryptedData = AesEncryptionUtil.encryptAesBase64(jsonString)
+                val requestBody = encryptedData.toRequestBody("text/plain".toMediaTypeOrNull())
+
+                requestBuilder
+                    .post(requestBody)
+                    .addHeader("X-Encrypted", "true")
+                    .addHeader("Content-Type", "text/plain")
+            } else {
+                // ✅ 이 부분이 잘못되어 있었음. FormBody는 그대로 넘겨야 함.
+                requestBuilder
+                    .post(jsonBody) // ← FormBody 그대로
+                    .addHeader("Content-Type", "application/x-www-form-urlencoded")
+            }
+
+            // 공통 헤더 설정
+            requestBuilder
+                .addHeader("Cookie", "session=$sessionId")
+                .addHeader("Connection", "close")
+
+            // 요청 생성 및 실행
+            val request = requestBuilder.build()
+            executeRequest(request)
+        } catch (e: Exception) {
+            Log.e("ApiServiceCommon", "POST 요청 중 예외 발생: ${e.message}", e)
             ApiResult.Error(message = "네트워크 오류: ${e.message}")
         }
     }

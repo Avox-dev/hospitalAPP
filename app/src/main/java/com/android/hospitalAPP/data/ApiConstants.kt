@@ -3,7 +3,7 @@ package com.android.hospitalAPP.data
 
 object ApiConstants {
     // 기본 API URL
-    const val BASE_URL = "http://192.168.219.186:5002/api"
+    const val BASE_URL = "http://192.168.0.69:5002/api"
 
     // 회원 관련 API
     const val REGISTER_URL = "$BASE_URL/users/register"
@@ -13,6 +13,8 @@ object ApiConstants {
     const val CHANGEPWD_URL = "$BASE_URL/users/change-password"
     const val WITHDRAW_URL = "$BASE_URL/users/withdraw"
     const val HEALTH_INFO_URL = "$BASE_URL/patient/info"
+    const val SEND_EMAIL_CODE_URL = "$BASE_URL/users/send_verification_code"
+    const val VERIFY_CODE_URL = "$BASE_URL/users/verify_code"
 
     // 예약 관련 API
     const val RESERVATION_URL = "$BASE_URL/reservations"
