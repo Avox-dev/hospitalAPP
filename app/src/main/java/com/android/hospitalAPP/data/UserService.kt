@@ -157,21 +157,26 @@ class UserService {
         weightKg: String,
         allergyInfo: String,
         pastIllnesses: String,
-        chronicDiseases: String
+        chronicDiseases: String,
+        currentMedications: String,
+        smokingStatus: String
     ): ApiResult<JSONObject> = withContext(Dispatchers.IO) {
-        val userId = UserRepository.getInstance().currentUser.value?.userId?.toIntOrNull() ?: -1
+        val userId = UserRepository.getInstance().currentUser.value?.userId?.toString() ?: "-1"
 
         val jsonBody = JSONObject().apply {
             put("user_id", userId)
             put("blood_type", bloodType)
-            put("height_cm", heightCm.toFloatOrNull() ?: 0f)
-            put("weight_kg", weightKg.toFloatOrNull() ?: 0f)
+            put("height_cm", heightCm)  // Float 변환 제거
+            put("weight_kg", weightKg)  // Float 변환 제거
             put("allergy_info", allergyInfo)
             put("past_illnesses", pastIllnesses)
             put("chronic_diseases", chronicDiseases)
+            put("medications", currentMedications)
+            put("smoking", smokingStatus)
         }
         ApiServiceCommon.postRequest(ApiConstants.HEALTH_INFO_URL, jsonBody)
     }
+
 
     // ✅ GET API 요청 추가
     suspend fun getHealthInfo(): ApiResult<JSONObject> = withContext(Dispatchers.IO) {
