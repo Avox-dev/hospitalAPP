@@ -1,3 +1,4 @@
+//ApiServiceCommon.kt
 package com.android.hospitalAPP.data
 
 import android.util.Log
@@ -13,6 +14,8 @@ import java.io.IOException
 import java.net.Proxy
 import com.android.hospitalAPP.util.AesEncryptionUtil
 import okhttp3.FormBody
+import org.json.JSONTokener
+import org.json.JSONArray
 
 sealed class ApiResult<out T> {
     data class Success<T>(val data: T) : ApiResult<T>()
@@ -20,7 +23,7 @@ sealed class ApiResult<out T> {
 }
 
 object ApiServiceCommon {
-
+/*
     private val client = OkHttpClient.Builder()
         .connectTimeout(30, TimeUnit.SECONDS)  // 타임아웃 시간 줄임
         .readTimeout(30, TimeUnit.SECONDS)
@@ -30,6 +33,25 @@ object ApiServiceCommon {
         .protocols(listOf(Protocol.HTTP_1_1))  // HTTP/1.1만 사용
         .proxy(Proxy.NO_PROXY)  // 프록시 무시
         .build()
+*/
+private val client = OkHttpClient.Builder()
+    .connectTimeout(30, TimeUnit.SECONDS)
+    .readTimeout(30, TimeUnit.SECONDS)
+    .writeTimeout(30, TimeUnit.SECONDS)
+    .retryOnConnectionFailure(true)
+    .connectionPool(ConnectionPool(0, 1, TimeUnit.MINUTES))
+    .protocols(listOf(Protocol.HTTP_1_1))
+    .proxy(Proxy.NO_PROXY)
+
+    .addInterceptor { chain ->
+        Log.d("BodyInterceptor", ">>> 인터셉터가 호출되었습니다!")
+        val response = chain.proceed(chain.request())
+        response.newBuilder()
+            .removeHeader("Content-Length")
+            .build()
+    }
+    .build()
+
 
     suspend fun postRequest(
         url: String,
@@ -195,8 +217,18 @@ object ApiServiceCommon {
                 response.close()
             }
 
+            // 1) JSONTokener로 raw 문자열을 파싱해 값 종류를 판별
             val jsonResponse = try {
-                JSONObject(responseBody)
+                when (val parsed = JSONTokener(responseBody).nextValue()) {
+                    // 2a) 객체로 왔으면 그대로 사용
+                    is JSONObject -> parsed
+                    // 2b) 배열로 왔으면 data.items 구조로 감싸기
+                    is JSONArray  -> JSONObject().apply {
+                        put("data", JSONObject().put("items", parsed))
+                    }
+                    // 그 외는 빈 객체
+                    else          -> JSONObject()
+                }
             } catch (e: Exception) {
                 Log.e("ApiServiceCommon", "JSON 파싱 실패: ${e.message}", e)
                 JSONObject().put("message", "JSON 파싱 실패: ${e.message}")
@@ -215,6 +247,24 @@ object ApiServiceCommon {
             ApiResult.Error(message = "응답 처리 오류: ${e.message}")
         }
     }
+    suspend fun postForm(
+        url: String,
+        formBody: FormBody
+    ): ApiResult<JSONObject> = try {
+        val sessionId = UserRepository.getInstance().getSessionId()
+        Log.d("ApiServiceCommon", "세션 아이디: $sessionId")
+        Log.d("ApiServiceCommon", "POST Form URL: $url")
+        Log.d("ApiServiceCommon", "POST Form Body: $formBody")
 
+        val request = Request.Builder()
+            .url(url)
+            .post(formBody)
+            .addHeader("Cookie", "session=$sessionId")
+            .build()
 
+        executeRequest(request)
+    } catch (e: Exception) {
+        Log.e("ApiServiceCommon", "POST Form 예외: ${e.message}", e)
+        ApiResult.Error(message = "네트워크 오류: ${e.message}")
+    }
 }
