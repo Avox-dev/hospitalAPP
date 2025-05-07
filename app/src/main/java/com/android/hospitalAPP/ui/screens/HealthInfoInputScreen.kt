@@ -77,7 +77,7 @@ fun HealthInfoInputScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(paddingValues),
-                contentAlignment = Alignment.Center //Screen.Login.route
+                contentAlignment = Alignment.Center
             ) {
                 Text("로그인이 필요한 서비스입니다.", fontSize = 18.sp)
             }
@@ -146,6 +146,68 @@ fun HealthInfoInputScreen(
 
                 Spacer(modifier = Modifier.height(dimens))
 
+                // 복용 중인 약물 (새로 추가됨)
+                OutlinedTextField(
+                    value = viewModel.currentMedications.value,
+                    onValueChange = { viewModel.currentMedications.value = it },
+                    label = { Text("복용 중인 약물") },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(100.dp),
+                    maxLines = 4,
+                    shape = RoundedCornerShape(8.dp)
+                )
+
+                Spacer(modifier = Modifier.height(dimens))
+
+// 흡연 상태 라디오 그룹 (세 가지 옵션)
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp)
+                ) {
+                    Text("흡연 상태", fontSize = 16.sp)
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = viewModel.smokingStatus.value == "NON_SMOKER",
+                            onClick = { viewModel.smokingStatus.value = "NON_SMOKER" }
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("비흡연자")
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = viewModel.smokingStatus.value == "CURRENT_SMOKER",
+                            onClick = { viewModel.smokingStatus.value = "CURRENT_SMOKER" }
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("현재 흡연 중")
+                    }
+
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        RadioButton(
+                            selected = viewModel.smokingStatus.value == "FORMER_SMOKER",
+                            onClick = { viewModel.smokingStatus.value = "FORMER_SMOKER" }
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("과거 흡연자")
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(dimens))
+
                 // 과거 질병 이력 (멀티라인, 높이 증가)
                 OutlinedTextField(
                     value = viewModel.pastIllnesses.value,
@@ -153,7 +215,7 @@ fun HealthInfoInputScreen(
                     label = { Text("과거 질병 이력") },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(150.dp), // ✅ 기존보다 두 배 정도 높게
+                        .height(150.dp),
                     maxLines = 5,
                     shape = RoundedCornerShape(8.dp)
                 )
@@ -167,7 +229,7 @@ fun HealthInfoInputScreen(
                     label = { Text("만성 질환") },
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(150.dp), // ✅ 동일한 높이 유지
+                        .height(150.dp),
                     maxLines = 5,
                     shape = RoundedCornerShape(8.dp)
                 )
@@ -175,11 +237,12 @@ fun HealthInfoInputScreen(
                 // 저장 버튼
                 Button(
                     onClick = { viewModel.submitHealthInfo() },
-                    modifier = Modifier.fillMaxWidth().padding(16.dp)
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp)
                 ) {
                     Text("저장하기")
                 }
-
             }
         }
     }
@@ -244,4 +307,3 @@ fun BloodTypeDropdown(
         }
     }
 }
-
