@@ -20,7 +20,6 @@ import com.android.hospitalAPP.ui.screens.ReservationHistoryScreen
 import com.android.hospitalAPP.ui.screens.ChatBotScreen
 import com.android.hospitalAPP.ui.screens.HospitalSearchResultScreen
 import com.android.hospitalAPP.ui.screens.HealthInfoInputScreen
-
 import com.android.hospitalAPP.ui.screens.NoticeDetailScreen
 import com.android.hospitalAPP.ui.screens.PostDetailScreen
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -31,6 +30,7 @@ import androidx.compose.material3.Text
 import com.android.hospitalAPP.ui.screens.WithdrawAccountScreen
 import com.android.hospitalAPP.ui.screens.ChangePasswordScreen
 import com.android.hospitalAPP.ui.screens.NotificationScreen
+import com.android.hospitalAPP.ui.screens.FaqScreen
 
 sealed class Screen(val route: String) {
     object Home : Screen("home")
@@ -58,6 +58,8 @@ sealed class Screen(val route: String) {
     object HealthInfoInput : Screen("health_info_input")
 
     object Notification : Screen("notification")
+
+    object Faq : Screen("faq")
 }
 
 @Composable
@@ -257,6 +259,12 @@ fun AppNavigation(
 
         composable(route = Screen.Notification.route) {
             NotificationScreen(
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        composable(route = Screen.Faq.route) {
+            FaqScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }

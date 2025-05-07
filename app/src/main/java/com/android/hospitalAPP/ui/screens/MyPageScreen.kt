@@ -55,7 +55,9 @@ fun MyPageScreen(
         )
 
         // Quick Menu Icons
-        QuickMenuSection()
+        QuickMenuSection(
+            navigateToScreen = navigateToScreen
+        )
 
         // Menu List in ScrollView
         MenuListSection(
@@ -143,7 +145,9 @@ fun MyPageTopBar(
 }
 
 @Composable
-fun QuickMenuSection() {
+fun QuickMenuSection(
+    navigateToScreen: (String) -> Unit = {}
+) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -175,7 +179,7 @@ fun QuickMenuSection() {
         QuickMenuItem(
             text = "고객센터",
             iconRes = android.R.drawable.ic_menu_help,
-            onClick = { /* 고객센터 화면으로 이동 */ }
+            onClick = { navigateToScreen(Screen.Faq.route) }
         )
     }
 }
@@ -332,8 +336,9 @@ fun MenuListSection(
         )
 
         MenuItemCard(
-            title = "고객 센터(미구현)",
-            subtitle = "문의하기, 공지사항, FAQ"
+            title = "고객 센터",
+            subtitle = "FAQ",
+            onClick = { navigateToScreen(Screen.Faq.route) }
         )
 
         TextButton(
