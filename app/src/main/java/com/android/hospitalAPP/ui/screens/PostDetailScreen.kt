@@ -87,7 +87,31 @@ fun PostDetailScreen(
                 Spacer(Modifier.height(24.dp))
                 Text(text = "댓글", style = MaterialTheme.typography.titleMedium)
             }
-            // 3) 입력창
+
+            // 3) 댓글 & 대댓글 리스트
+            items(comments) { comment ->
+                // 일반 댓글
+                CommentItem(
+                    comment = comment,
+                    onReplyClick = { replyingTo = comment.id }
+                )
+
+                // 대댓글
+                comment.replies.forEach { reply ->
+                    ReplyItem(
+                        reply = reply,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(start = 24.dp, top = 4.dp, bottom = 4.dp)
+                    )
+                    // 대댓글마다 구분선도 들여쓰기
+                    Divider(modifier = Modifier.padding(start = 24.dp))
+                }
+
+                // 댓글 간 구분선
+                Divider()
+            }
+            // 4) 입력창
             item {
                 Spacer(Modifier.height(16.dp))
                 Row(
@@ -115,29 +139,6 @@ fun PostDetailScreen(
                         Text("등록")
                     }
                 }
-            }
-            // 4) 댓글 & 대댓글 리스트
-            items(comments) { comment ->
-                // 일반 댓글
-                CommentItem(
-                    comment = comment,
-                    onReplyClick = { replyingTo = comment.id }
-                )
-
-                // 대댓글
-                comment.replies.forEach { reply ->
-                    ReplyItem(
-                        reply = reply,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(start = 24.dp, top = 4.dp, bottom = 4.dp)
-                    )
-                    // 대댓글마다 구분선도 들여쓰기
-                    Divider(modifier = Modifier.padding(start = 24.dp))
-                }
-
-                // 댓글 간 구분선
-                Divider()
             }
         }
     }

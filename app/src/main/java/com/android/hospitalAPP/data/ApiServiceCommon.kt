@@ -17,40 +17,42 @@ import okhttp3.FormBody
 import org.json.JSONTokener
 import org.json.JSONArray
 
+import java.io.File
+
 sealed class ApiResult<out T> {
     data class Success<T>(val data: T) : ApiResult<T>()
     data class Error(val code: Int? = null, val message: String) : ApiResult<Nothing>()
 }
 
 object ApiServiceCommon {
-/*
+    /*
+        private val client = OkHttpClient.Builder()
+            .connectTimeout(30, TimeUnit.SECONDS)  // 타임아웃 시간 줄임
+            .readTimeout(30, TimeUnit.SECONDS)
+            .writeTimeout(30, TimeUnit.SECONDS)
+            .retryOnConnectionFailure(true)
+            .connectionPool(ConnectionPool(0, 1, TimeUnit.MINUTES))  // Keep-alive 연결 사용 안함
+            .protocols(listOf(Protocol.HTTP_1_1))  // HTTP/1.1만 사용
+            .proxy(Proxy.NO_PROXY)  // 프록시 무시
+            .build()
+    */
     private val client = OkHttpClient.Builder()
-        .connectTimeout(30, TimeUnit.SECONDS)  // 타임아웃 시간 줄임
+        .connectTimeout(30, TimeUnit.SECONDS)
         .readTimeout(30, TimeUnit.SECONDS)
         .writeTimeout(30, TimeUnit.SECONDS)
         .retryOnConnectionFailure(true)
-        .connectionPool(ConnectionPool(0, 1, TimeUnit.MINUTES))  // Keep-alive 연결 사용 안함
-        .protocols(listOf(Protocol.HTTP_1_1))  // HTTP/1.1만 사용
-        .proxy(Proxy.NO_PROXY)  // 프록시 무시
-        .build()
-*/
-private val client = OkHttpClient.Builder()
-    .connectTimeout(30, TimeUnit.SECONDS)
-    .readTimeout(30, TimeUnit.SECONDS)
-    .writeTimeout(30, TimeUnit.SECONDS)
-    .retryOnConnectionFailure(true)
-    .connectionPool(ConnectionPool(0, 1, TimeUnit.MINUTES))
-    .protocols(listOf(Protocol.HTTP_1_1))
-    .proxy(Proxy.NO_PROXY)
+        .connectionPool(ConnectionPool(0, 1, TimeUnit.MINUTES))
+        .protocols(listOf(Protocol.HTTP_1_1))
+        .proxy(Proxy.NO_PROXY)
 
-    .addInterceptor { chain ->
-        Log.d("BodyInterceptor", ">>> 인터셉터가 호출되었습니다!")
-        val response = chain.proceed(chain.request())
-        response.newBuilder()
-            .removeHeader("Content-Length")
-            .build()
-    }
-    .build()
+        .addInterceptor { chain ->
+            Log.d("BodyInterceptor", ">>> 인터셉터가 호출되었습니다!")
+            val response = chain.proceed(chain.request())
+            response.newBuilder()
+                .removeHeader("Content-Length")
+                .build()
+        }
+        .build()
 
 
     suspend fun postRequest(
@@ -180,7 +182,7 @@ private val client = OkHttpClient.Builder()
         }
     }
 
-    private fun executeRequest(request: Request): ApiResult<JSONObject> {
+    fun executeRequest(request: Request): ApiResult<JSONObject> {
         var responseBody = "{}"
 
         return try {
@@ -247,6 +249,7 @@ private val client = OkHttpClient.Builder()
             ApiResult.Error(message = "응답 처리 오류: ${e.message}")
         }
     }
+
     suspend fun postForm(
         url: String,
         formBody: FormBody
@@ -267,4 +270,85 @@ private val client = OkHttpClient.Builder()
         Log.e("ApiServiceCommon", "POST Form 예외: ${e.message}", e)
         ApiResult.Error(message = "네트워크 오류: ${e.message}")
     }
+
+    /**
+     * 멀티파트 요청 처리 메서드
+     */
+    fun executeMultipartRequest(request: Request, tempFile: File): ApiResult<JSONObject> {
+        var responseBody = "{}"
+
+        return try {
+            val response = client.newCall(request).execute()
+
+            try {
+                Log.d("ApiServiceCommon", "응답 코드: ${response.code}")
+                Log.d("ApiServiceCommon", "응답 헤더:")
+                response.headers.forEach { (name, value) ->
+                    Log.d("ApiServiceCommon", "  $name: $value")
+                }
+
+                responseBody = response.body?.use { it.string() } ?: "{}"
+                Log.d("ApiServiceCommon", "원본 응답: $responseBody")
+
+                // 🔐 조건부 복호화: 응답 헤더가 X-Encrypted: true 인 경우만
+                val isEncrypted = response.header("X-Encrypted")?.equals("true", ignoreCase = true) == true
+                if (isEncrypted) {
+                    val decrypted = AesEncryptionUtil.decryptAesBase64(
+                        encryptedBase64 = responseBody,
+                        key = AesEncryptionUtil.SECRET_KEY,
+                        iv = AesEncryptionUtil.IV
+                    )
+                    responseBody = decrypted
+                    Log.d("ApiServiceCommon", "복호화된 응답: $decrypted")
+                }
+
+            } catch (e: IOException) {
+                Log.e("ApiServiceCommon", "응답 본문 읽기 실패: ${e.message}", e)
+                if (responseBody == "{}") {
+                    responseBody = "{\"message\":\"응답 본문 읽기 실패\"}"
+                }
+            } finally {
+                response.close()
+                // 임시 파일 삭제
+                tempFile.delete()
+            }
+
+            // 1) JSONTokener로 raw 문자열을 파싱해 값 종류를 판별
+            val jsonResponse = try {
+                when (val parsed = JSONTokener(responseBody).nextValue()) {
+                    // 2a) 객체로 왔으면 그대로 사용
+                    is JSONObject -> parsed
+                    // 2b) 배열로 왔으면 data.items 구조로 감싸기
+                    is JSONArray  -> JSONObject().apply {
+                        put("data", JSONObject().put("items", parsed))
+                    }
+                    // 그 외는 빈 객체
+                    else          -> JSONObject()
+                }
+            } catch (e: Exception) {
+                Log.e("ApiServiceCommon", "JSON 파싱 실패: ${e.message}", e)
+                JSONObject().put("message", "JSON 파싱 실패: ${e.message}")
+            }
+
+            if (response.isSuccessful) {
+                ApiResult.Success(jsonResponse)
+            } else {
+                val errorMessage = jsonResponse.optString("message", "오류 발생: ${response.code}")
+                Log.e("ApiServiceCommon", "에러 응답: $errorMessage")
+                ApiResult.Error(response.code, errorMessage)
+            }
+
+        } catch (e: Exception) {
+            // 에러 발생 시 임시 파일 삭제 시도
+            try {
+                tempFile.delete()
+            } catch (deleteError: Exception) {
+                Log.e("ApiServiceCommon", "임시 파일 삭제 실패: ${deleteError.message}")
+            }
+
+            Log.e("ApiServiceCommon", "응답 처리 중 예외 발생: ${e.message}", e)
+            ApiResult.Error(message = "응답 처리 오류: ${e.message}")
+        }
+    }
 }
+
