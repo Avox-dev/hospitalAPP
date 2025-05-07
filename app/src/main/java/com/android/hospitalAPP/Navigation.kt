@@ -20,6 +20,7 @@ import com.android.hospitalAPP.ui.screens.ReservationHistoryScreen
 import com.android.hospitalAPP.ui.screens.ChatBotScreen
 import com.android.hospitalAPP.ui.screens.HospitalSearchResultScreen
 import com.android.hospitalAPP.ui.screens.HealthInfoInputScreen
+import com.android.hospitalAPP.ui.screens.HealthyMagazineScreen
 
 import com.android.hospitalAPP.ui.screens.NoticeDetailScreen
 import com.android.hospitalAPP.ui.screens.PostDetailScreen
@@ -40,6 +41,8 @@ sealed class Screen(val route: String) {
     object Login : Screen("login")
     object Register : Screen("register")
     object WritePost : Screen("write_post")
+
+    object HealthyMagazine : Screen("HealthyMagazine")
     object ProfileManagement : Screen("profile_management")
     object ReservationHistory : Screen("reservation_history")
     object ChatBot : Screen("chatbot")
@@ -81,6 +84,14 @@ fun AppNavigation(
 
         composable(Screen.MyDdocDoc.route) {
             DoctorFutureScreen(
+                navigateToScreen = { route ->
+                    navController.navigate(route)
+                }
+            )
+        }
+
+        composable(Screen.HealthyMagazine.route) {
+            HealthyMagazineScreen(
                 navigateToScreen = { route ->
                     navController.navigate(route)
                 }

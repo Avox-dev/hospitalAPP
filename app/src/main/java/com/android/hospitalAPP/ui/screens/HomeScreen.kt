@@ -47,8 +47,6 @@ fun HomeScreen(
     navigateToScreen: (String) -> Unit,
     viewModel: HomeViewModel = viewModel(),
 ) {
-
-
     val dimens = appDimens()
 
     // 현재 사용자 위치 (기본값: 서울시청)
@@ -97,7 +95,7 @@ fun HomeScreen(
             Spacer(modifier = Modifier.height(16.dp))
 
             Text(
-                text = "QnA",
+                text = "자유게시판",
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
                 color = Color.Black,
@@ -152,6 +150,11 @@ fun HomeScreen(
 
             // 우리아이 키/몸무게 배너
             ChildGrowthBanner(navigateToScreen)
+
+
+            Spacer(modifier = Modifier.height(dimens.paddingLarge.dp))
+
+            HealthyMagazine(navigateToScreen)
 
             Spacer(modifier = Modifier.height(dimens.paddingLarge.dp))
 
@@ -514,7 +517,6 @@ fun CategoryButton(
 @Composable
 fun ChildGrowthBanner(navigateToScreen: (String) -> Unit) {
     val dimens = appDimens()
-
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -567,7 +569,6 @@ fun ChildGrowthBanner(navigateToScreen: (String) -> Unit) {
         }
     }
 }
-
 @Composable
 fun DepartmentItem(
     name: String,
@@ -611,5 +612,63 @@ fun DepartmentItem(
         )
     }
 }
+@Composable
+fun HealthyMagazine(navigateToScreen: (String) -> Unit) {
+    val dimens = appDimens()
 
+    // 건강 매거진에 적합한 녹색 계열 배경색 사용
+    val magazineBackground = Color(0xFF4CAF50)
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(130.dp)  // 높이를 약간 늘려 타이틀을 추가할 공간 확보
+            .clickable { navigateToScreen(Screen.HealthyMagazine.route) },
+        shape = RoundedCornerShape(dimens.cornerRadius.dp),
+        colors = CardDefaults.cardColors(containerColor = magazineBackground),
+        elevation = CardDefaults.cardElevation(4.dp)  // 약간의 그림자 추가
+    ) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
+        ) {
+            // 상단 타이틀 추가
+            Text(
+                text = "건강 매거진",
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+                color = Color.White,
+                modifier = Modifier
+                    .align(Alignment.TopStart)
+                    .padding(bottom = 8.dp)
+            )
+
+            Column(
+                modifier = Modifier
+                    .align(Alignment.CenterStart)
+                    .fillMaxWidth()
+                    .padding(top = 24.dp)  // 타이틀과 간격 추가
+            ) {
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                Text(
+                    text = "건강한 생활습관의 비밀",
+                    fontSize = 18.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+
+                Spacer(modifier = Modifier.height(4.dp))
+
+                Text(
+                    text = "전문가가 알려주는 일상 속 건강 관리 팁",
+                    fontSize = 14.sp,
+                    color = Color.White.copy(alpha = 0.9f)
+                )
+            }
+        }
+    }
+}
 

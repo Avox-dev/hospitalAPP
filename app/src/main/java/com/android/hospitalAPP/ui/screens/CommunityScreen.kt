@@ -83,7 +83,7 @@ fun CommunityScreen(
                 Tab(
                     selected = selectedTab == 0,
                     onClick = { selectedTab = 0 },
-                    text = { Text("Q&A") })
+                    text = { Text("자유게시판") })
                 Tab(
                     selected = selectedTab == 1,
                     onClick = { selectedTab = 1 },
