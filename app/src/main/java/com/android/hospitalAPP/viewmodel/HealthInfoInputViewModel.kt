@@ -19,6 +19,12 @@ class HealthInfoInputViewModel : ViewModel() {
     val pastIllnesses = mutableStateOf("")
     val chronicDiseases = mutableStateOf("")
 
+    // 새로 추가된 필드들
+    val currentMedications = mutableStateOf("")
+    // Boolean 타입 변수를 String 타입으로 변경
+    val smokingStatus = mutableStateOf("NON_SMOKER") // 기본값은 비흡연자
+
+
     private val _updateState = MutableStateFlow<UpdateState>(UpdateState.Initial)
     val updateUiState: StateFlow<UpdateState> = _updateState
 
@@ -32,7 +38,9 @@ class HealthInfoInputViewModel : ViewModel() {
                     weightKg.value,
                     allergyInfo.value,
                     pastIllnesses.value,
-                    chronicDiseases.value
+                    chronicDiseases.value,
+                    currentMedications.value,
+                    smokingStatus.value
                 )
 
                 when (result) {
@@ -44,6 +52,7 @@ class HealthInfoInputViewModel : ViewModel() {
             }
         }
     }
+
     fun loadHealthInfo() {
         viewModelScope.launch {
             try {
@@ -51,12 +60,17 @@ class HealthInfoInputViewModel : ViewModel() {
                 if (result is ApiResult.Success) {
                     val data = result.data.optJSONObject("data")
                     data?.let {
+                        // 기존 코드
                         bloodType.value = it.optString("blood_type", "")
                         heightCm.value = it.optString("height_cm", "")
                         weightKg.value = it.optString("weight_kg", "")
                         allergyInfo.value = it.optString("allergy_info", "")
                         pastIllnesses.value = it.optString("past_illnesses", "")
                         chronicDiseases.value = it.optString("chronic_diseases", "")
+                        currentMedications.value = it.optString("medications", "")
+
+                        // 흡연 상태 로드
+                        smokingStatus.value = it.optString("smoking", "NON_SMOKER")
                     }
                 }
             } catch (e: Exception) {
