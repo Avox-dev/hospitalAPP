@@ -1,6 +1,8 @@
 // PostRepository.kt - API 통신을 위해 수정됨
 package com.android.hospitalAPP.data
 
+import android.content.Context
+import android.net.Uri
 import com.android.hospitalAPP.viewmodel.CommunityViewModel.Post
 import com.android.hospitalAPP.viewmodel.CommunityViewModel.Notice
 import kotlinx.coroutines.CoroutineScope
@@ -14,6 +16,12 @@ import java.text.SimpleDateFormat
 import java.util.*
 import android.util.Log
 import org.json.JSONArray
+import okhttp3.MultipartBody
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.Request
+import java.io.File
+import java.io.FileOutputStream
 
 // ✅ 게시글 및 공지사항 관리 리포지토리 (API 연동)
 object PostRepository {
@@ -28,11 +36,11 @@ object PostRepository {
     // API 통신을 위한 CoroutineScope
     private val coroutineScope = CoroutineScope(Dispatchers.IO)
     private val postService = PostService()
+
     init {
         // 앱 시작 시 게시글 불러오기
         fetchPosts()
     }
-
 
     /**
      * ✅ 서버에서 게시글 목록 불러오기 (QnA 데이터)
@@ -169,33 +177,31 @@ object PostRepository {
         }
     }
 
-
     /**
      * ✅ 게시글 추가 (API 연동)
      */
-    fun addPost(title: String, content: String, writer: String) {
+    fun addPost(title: String, content: String, category: String, fileUri: Uri?, context: Context) {
         coroutineScope.launch {
             try {
-                val result = createPostApi(title, content, writer)
+                val result = createPostApi(title, content, category, fileUri, context)
 
                 if (result is ApiResult.Success) {
                     val jsonResponse = result.data
                     val status = jsonResponse.optString("status")
 
                     if (status == "success") {
-                        // 성공 시, 목록 다시 불러오기
                         fetchPosts()
                     } else {
                         println("게시글 추가 실패: ${jsonResponse.optString("message", "알 수 없는 오류")}")
-                        addPostLocally(title, content, writer)
+                        addPostLocally(title, content, category)
                     }
                 } else if (result is ApiResult.Error) {
                     println("게시글 추가 요청 실패: ${result.message}")
-                    addPostLocally(title, content, writer)
+                    addPostLocally(title, content, category)
                 }
             } catch (e: Exception) {
                 println("게시글 추가 중 예외 발생: ${e.message}")
-                addPostLocally(title, content, writer)
+                addPostLocally(title, content, category)
             }
         }
     }
@@ -203,18 +209,58 @@ object PostRepository {
     /**
      * ✅ 게시글 추가 API 요청 (POST)
      */
-    private suspend fun createPostApi(title: String, content: String, writer: String): ApiResult<JSONObject> = withContext(Dispatchers.IO) {
+    private suspend fun createPostApi(title: String, content: String, category: String, fileUri: Uri?, context: Context): ApiResult<JSONObject> = withContext(Dispatchers.IO) {
+        try {
+            val jsonBody = JSONObject().apply {
+                put("title", title)
+                put("comment", content)
+                put("category", category) // 서버 코드에서 사용하는 필드명
+            }
 
+            if (fileUri != null) {
+                // 이미지 파일이 있는 경우, MultipartBody 사용
+                val requestBody = MultipartBody.Builder()
+                    .setType(MultipartBody.FORM)
 
+                // 파일명 추출
+                val fileName = getFileNameFromUri(context, fileUri) ?: "image.jpg"
+                val tempFile = createTempFileFromUri(context, fileUri, fileName)
 
+                if (tempFile != null) {
+                    // 서버 코드에 맞게 필드명을 'images'로 변경
+                    requestBody.addFormDataPart(
+                        "images",
+                        fileName,
+                        tempFile.asRequestBody(getMimeType(fileName).toMediaTypeOrNull())
+                    )
 
-        val jsonBody = JSONObject().apply {
-            put("title", title)
-            put("comment", content)
-            put("username", writer)
+                    // JSON 데이터의 각 필드를 form data로 추가
+                    requestBody.addFormDataPart("title", title)
+                        .addFormDataPart("comment", content)
+                        .addFormDataPart("category", category)
+
+                    val sessionId = UserRepository.getInstance().getSessionId()
+
+                    val request = Request.Builder()
+                        .url(ApiConstants.POSTS_URL)
+                        .post(requestBody.build())
+                        .addHeader("Cookie", "session=$sessionId")
+                        .addHeader("Connection", "close")
+                        .build()
+
+                    return@withContext ApiServiceCommon.executeMultipartRequest(request, tempFile)
+                } else {
+                    // 파일 생성 실패 시 일반 JSON 요청으로 전환
+                    return@withContext ApiServiceCommon.postRequest(ApiConstants.POSTS_URL, jsonBody)
+                }
+            } else {
+                // 파일이 없는 경우 일반 JSON 요청
+                return@withContext ApiServiceCommon.postRequest(ApiConstants.POSTS_URL, jsonBody)
+            }
+        } catch (e: Exception) {
+            Log.e("PostRepository", "게시글 생성 API 요청 중 오류: ${e.message}", e)
+            return@withContext ApiResult.Error(message = "게시글 생성 요청 실패: ${e.message}")
         }
-
-        return@withContext ApiServiceCommon.postRequest(ApiConstants.POSTS_URL, jsonBody)
     }
 
     /**
@@ -242,6 +288,46 @@ object PostRepository {
         _posts.value = currentPosts
     }
 
+    // Uri에서 파일명 추출
+    private fun getFileNameFromUri(context: Context, uri: Uri): String? {
+        val cursor = context.contentResolver.query(uri, null, null, null, null)
+        return cursor?.use {
+            if (it.moveToFirst()) {
+                val displayNameIndex = it.getColumnIndex(android.provider.OpenableColumns.DISPLAY_NAME)
+                if (displayNameIndex != -1) {
+                    it.getString(displayNameIndex)
+                } else null
+            } else null
+        }
+    }
+
+    // Uri에서 임시 파일 생성
+    private fun createTempFileFromUri(context: Context, uri: Uri, fileName: String): File? {
+        return try {
+            val tempFile = File(context.cacheDir, fileName)
+            context.contentResolver.openInputStream(uri)?.use { inputStream ->
+                FileOutputStream(tempFile).use { outputStream ->
+                    inputStream.copyTo(outputStream)
+                }
+            }
+            tempFile
+        } catch (e: Exception) {
+            Log.e("PostRepository", "임시 파일 생성 실패: ${e.message}", e)
+            null
+        }
+    }
+
+    // 파일 확장자로 MIME 타입 추정
+    private fun getMimeType(fileName: String): String {
+        return when {
+            fileName.endsWith(".jpg", true) || fileName.endsWith(".jpeg", true) -> "image/jpeg"
+            fileName.endsWith(".png", true) -> "image/png"
+            fileName.endsWith(".gif", true) -> "image/gif"
+            fileName.endsWith(".bmp", true) -> "image/bmp"
+            fileName.endsWith(".webp", true) -> "image/webp"
+            else -> "image/jpeg" // 기본 타입을 이미지로 설정
+        }
+    }
 }
 
 

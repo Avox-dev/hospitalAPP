@@ -1,5 +1,7 @@
 package com.android.hospitalAPP.viewmodel
 
+import android.content.Context
+import android.net.Uri
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -96,8 +98,8 @@ class CommunityViewModel : ViewModel() {
     }
 
     /** 새 게시글 등록 */
-    fun addPost(title: String, content: String, writer: String) {
-        PostRepository.addPost(title, content, writer)
+    fun addPost(title: String, content: String, category: String, fileUri: Uri?, context: Context) {
+        PostRepository.addPost(title, content, category, fileUri, context)
     }
 
     // 데이터 클래스 정의
