@@ -5,6 +5,10 @@ import com.android.hospitalAPP.data.ApiServiceCommon
 import com.android.hospitalAPP.data.model.Comment
 import okhttp3.FormBody
 import org.json.JSONObject
+import android.util.Log
+import org.json.JSONArray
+import org.json.JSONTokener
+
 
 
 
@@ -14,8 +18,31 @@ object CommentService {
     suspend fun getComments(qnaId: Int): List<Comment> {
         val url = "${ApiConstants.POSTS_URL}/$qnaId/comments"
         return when (val result = ApiServiceCommon.getRequest(url)) {
-            is ApiResult.Success -> parseComments(result.data, qnaId)
-            else                 -> emptyList()
+            is ApiResult.Success -> {
+                val raw = result.data
+                try {
+                    when (val parsed = JSONTokener(raw.toString()).nextValue()) {
+                        is JSONObject -> {
+                            // { "data": { "items": […] } } 형태
+                            val items = parsed
+                                .getJSONObject("data")
+                                .getJSONArray("items")
+                            val wrapper = JSONObject().apply { put("comments", items) }
+                            parseComments(wrapper, qnaId)
+                        }
+                        is JSONArray -> {
+                            // [ … ] 형태
+                            val wrapper = JSONObject().apply { put("comments", parsed) }
+                            parseComments(wrapper, qnaId)
+                        }
+                        else -> emptyList()
+                    }
+                } catch (e: Exception) {
+                    Log.w("CommentService", "댓글 파싱 실패, 빈 리스트 반환", e)
+                    emptyList()
+                }
+            }
+            else -> emptyList()
         }
     }
 

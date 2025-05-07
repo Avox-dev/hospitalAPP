@@ -87,19 +87,7 @@ fun PostDetailScreen(
                 Spacer(Modifier.height(24.dp))
                 Text(text = "댓글", style = MaterialTheme.typography.titleMedium)
             }
-
-            // 3) 댓글 & 대댓글 리스트
-            items(comments) { comment ->
-                CommentItem(comment = comment, onReplyClick = {
-                    replyingTo = comment.id
-                })
-                comment.replies.forEach { reply ->
-                    ReplyItem(reply = reply)
-                }
-                Divider()
-            }
-
-            // 4) 입력창
+            // 3) 입력창
             item {
                 Spacer(Modifier.height(16.dp))
                 Row(
@@ -127,6 +115,16 @@ fun PostDetailScreen(
                         Text("등록")
                     }
                 }
+            }
+            // 4) 댓글 & 대댓글 리스트
+            items(comments) { comment ->
+                CommentItem(comment = comment, onReplyClick = {
+                    replyingTo = comment.id
+                })
+                comment.replies.forEach { reply ->
+                    ReplyItem(reply = reply)
+                }
+                Divider()
             }
         }
     }
