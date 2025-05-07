@@ -2,6 +2,7 @@
 package com.android.hospitalAPP.data
 
 import com.android.hospitalAPP.data.ApiServiceCommon
+import com.android.hospitalAPP.data.ApiConstants
 import com.android.hospitalAPP.data.model.Comment
 import okhttp3.FormBody
 import org.json.JSONObject
@@ -16,34 +17,64 @@ object CommentService {
 
     /** Q&A 댓글 불러오기 */
     suspend fun getComments(qnaId: Int): List<Comment> {
-        val url = "${ApiConstants.POSTS_URL}/$qnaId/comments"
-        return when (val result = ApiServiceCommon.getRequest(url)) {
-            is ApiResult.Success -> {
-                val raw = result.data
-                try {
-                    when (val parsed = JSONTokener(raw.toString()).nextValue()) {
-                        is JSONObject -> {
-                            // { "data": { "items": […] } } 형태
-                            val items = parsed
-                                .getJSONObject("data")
-                                .getJSONArray("items")
-                            val wrapper = JSONObject().apply { put("comments", items) }
-                            parseComments(wrapper, qnaId)
-                        }
-                        is JSONArray -> {
-                            // [ … ] 형태
-                            val wrapper = JSONObject().apply { put("comments", parsed) }
-                            parseComments(wrapper, qnaId)
-                        }
-                        else -> emptyList()
-                    }
-                } catch (e: Exception) {
-                    Log.w("CommentService", "댓글 파싱 실패, 빈 리스트 반환", e)
-                    emptyList()
+        val response = ApiServiceCommon.getRequest("${ApiConstants.POSTS_URL}/$qnaId/comments")
+        // 성공 케이스면 JSONObject.toString(), 아니면 빈 문자열
+        val raw = (response as? ApiResult.Success)?.data?.toString() ?: ""
+
+        return try {
+            when (val parsed = JSONTokener(raw).nextValue()) {
+                is JSONObject -> {
+                    // 기존 { data: { items: [...] } } 구조
+                    val items = parsed.getJSONObject("data").getJSONArray("items")
+                    parseComments(items, qnaId)
                 }
+                is JSONArray -> {
+                    // [ { comment:..., replies:[...] }, … ] 구조
+                    parseComments(parsed, qnaId)
+                }
+                else -> emptyList()
             }
-            else -> emptyList()
+        } catch (e: Exception) {
+            emptyList()
         }
+    }
+
+    /** JSON 배열을 넘기면, 각 요소의 replies 키까지 읽어서 Comment.replies 에 담아 줍니다. */
+    private fun parseComments(arr: JSONArray, qnaId: Int): List<Comment> {
+        val list = mutableListOf<Comment>()
+        for (i in 0 until arr.length()) {
+            val o = arr.getJSONObject(i)
+            // 1) 먼저 최상위 댓글
+            val parent = Comment(
+                id        = o.getInt("id"),
+                qnaId     = qnaId,
+                userId    = o.optInt("user_id"),      // Q&A API 에 user_id 가 없으면 optString 써야 할 수도 있어요
+                username  = o.getString("username"),
+                comment   = o.getString("comment"),
+                createdAt = o.getString("created_at"),
+                parentId  = o.optInt("parent_id").takeIf { it != 0 },
+                replies   = mutableListOf()            // 아직 비워 두고…
+            )
+            // 2) nested replies 파싱
+            val repliesJson = o.optJSONArray("replies") ?: JSONArray()
+            val repliesList = mutableListOf<Comment>()
+            for (j in 0 until repliesJson.length()) {
+                val ro = repliesJson.getJSONObject(j)
+                repliesList += Comment(
+                    id        = ro.getInt("id"),
+                    qnaId     = qnaId,
+                    userId    = ro.optInt("user_id"),
+                    username  = ro.getString("username"),
+                    comment   = ro.getString("comment"),
+                    createdAt = ro.getString("created_at"),
+                    parentId  = ro.optInt("parent_id").takeIf { it != 0 },
+                    replies   = mutableListOf()          // 대댓글의 대댓글은 아직 없으니 빈 리스트
+                )
+            }
+            // 3) 최상위 댓글에 대댓글 리스트 연결
+            list += parent.copy(replies = repliesList)
+        }
+        return list
     }
 
 
