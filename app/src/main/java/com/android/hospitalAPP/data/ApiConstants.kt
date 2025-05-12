@@ -3,7 +3,7 @@ package com.android.hospitalAPP.data
 
 object ApiConstants {
     // 기본 API URL
-    const val BASE_URL = "http://192.168.219.51:5002/api"
+    const val BASE_URL = "https://api.doctor-future.com/api"
 
     // 회원 관련 API
     const val REGISTER_URL = "$BASE_URL/users/register"
@@ -17,13 +17,13 @@ object ApiConstants {
     const val VERIFY_CODE_URL = "$BASE_URL/users/verify_code"
 
     // 예약 관련 API
-    const val RESERVATION_URL = "$BASE_URL/reservations"
+    const val RESERVATION_URL = "$BASE_URL/reservations/"
     //예약 조회 API
     const val RESERVATION_SEARCH_URL = "$BASE_URL/reservations/user"
 
     // 커뮤니티 관련 API
-    const val POSTS_URL = "$BASE_URL/qna"
-    const val NOTICES_URL = "$BASE_URL/notices"
+    const val POSTS_URL = "$BASE_URL/qna/"
+    const val NOTICES_URL = "$BASE_URL/notices/"
 
     // 챗봇 API URL
     const val CHATBOT_URL = "$BASE_URL/ai"
